@@ -1,8 +1,12 @@
+
+/* This Tab will is for displaying all stats like currents status, risk index,
+   average contacts, contacts today and location.
+ */
+
 package com.example.ctssd.Activities.Fragments;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -59,6 +63,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static android.content.Context.LOCATION_SERVICE;
+
 
 
 public class Tab2 extends Fragment implements View.OnClickListener {
