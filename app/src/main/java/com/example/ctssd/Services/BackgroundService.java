@@ -1,6 +1,10 @@
+
+/** This background service will discover all devices
+ *  and add them to local storage.
+ */
+
 package com.example.ctssd.Services;
 
-import android.app.AlertDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,7 +16,6 @@ import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.example.ctssd.Utils.DatabaseHelper;
-import com.example.ctssd.Utils.Utilities;
 import java.util.Calendar;
 
 public class BackgroundService extends Service
@@ -20,21 +23,27 @@ public class BackgroundService extends Service
     DatabaseHelper myDb;
     BluetoothAdapter bluetoothAdapter;
 
-
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         myDb = new DatabaseHelper(getApplicationContext());
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         // Register for broadcasts when a device is discovered.
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, filter);
+
+        // TODO : It can be optimized. Instead of using while loop use intent filter to check
+        // when discovery is finished
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 int i=0;
+
+                // after some time discovery gets stop automatically to save battery. So we added while loop.
                 while(true){
+
+                    // start discovery for devices
                     bluetoothAdapter.startDiscovery();
 
                     Log.i("service", "discovery started");
@@ -47,6 +56,7 @@ public class BackgroundService extends Service
                     i++;
                     if(i%4==0)
                     {
+                        // for updating list in Tab1.
                         Intent intent = new Intent("ACTION_update_list");
                         getApplication().sendBroadcast(intent);
                     }
@@ -68,6 +78,7 @@ public class BackgroundService extends Service
     public void onDestroy() {
         super.onDestroy();
         try {
+            // don't forget to unregister receiver
             unregisterReceiver(receiver);
         }
         catch (Exception e)
@@ -90,13 +101,12 @@ public class BackgroundService extends Service
                 Calendar calendar = Calendar.getInstance();
                 String time = calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE);
 
-                //if(phone!=null && Utilities.isPhoneNoValid(phone))
-                //{
-                    myDb.insertData(mac, time);
-                    Log.i("service", "device added :" +mac+" "+time+":"+calendar.get(Calendar.MILLISECOND));
-                    Intent intent1 = new Intent("ACTION_update_contacts_today");
-                    getApplication().sendBroadcast(intent1);
-                //}
+                myDb.insertData(mac, time);
+                Log.i("service", "device added :" +mac+" "+time+":"+calendar.get(Calendar.MILLISECOND));
+
+                // for updating contacts today in Tab2
+                Intent intent1 = new Intent("ACTION_update_contacts_today");
+                getApplication().sendBroadcast(intent1);
             }
         }
     };
