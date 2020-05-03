@@ -21,12 +21,6 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
-
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
@@ -38,6 +32,11 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
@@ -75,7 +74,6 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     private OnFragmentInteractionListener mListener;
     private ProgressBar currentStatusPBar, riskIndexPBar, averageContactsPBar, locationStatPBar, zoneColorPBar;
 
-    private static final int LIMIT = 100;
     private TextView todaysNum;
     private TextView riskIndexText, currentStatus, avgContacts, locationStat, zoneColor;
     private Button goToCornaInfoBTN;
@@ -132,35 +130,41 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         RelativeLayout numbersInfo = root.findViewById(R.id.id_contactsTodayLayout);
         RelativeLayout riskIndexInfo = root.findViewById(R.id.id_riskIndexLayout);
         RelativeLayout avgContactsInfo = root.findViewById(R.id.id_averageContactsLayout);
-        RelativeLayout warningLevelInfo = root.findViewById(R.id.id_warningLayout);
+        RelativeLayout locationAndZoneInfo = root.findViewById(R.id.id_warningLayout);
 
+        // For displaying info about each stat
         statusInfo.setOnClickListener(this);
         numbersInfo.setOnClickListener(this);
         riskIndexInfo.setOnClickListener(this);
         avgContactsInfo.setOnClickListener(this);
-        warningLevelInfo.setOnClickListener(this);
+        locationAndZoneInfo.setOnClickListener(this);
 
+        /** from here flow will be as follows
+         * 1. ask user to make device discoverable
+         * 2. go to onActivityResult. Call SetStatsValues() and getPermissions()
+         * 3. Go to onRequestPermissionResult and call setupBTAndStartService.
+         * 4. inside setupBTAndStartService start background service and call getLocation() method
+         * 5.
+         */
+
+        // For making device discoverable.
         Intent dIntent =  new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         dIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3600);
         startActivityForResult(dIntent, 45);
 
+        // for getting lastLocation.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
+        // Assign values to the stats
         setStatsValues();
 
         myDb = new DatabaseHelper(getActivity());
 
-
-        Cursor cursor = myDb.getAllData();
-        if (cursor != null) {
-            contactsTodayVar = cursor.getCount();
-            todaysNum.setText(String.valueOf(contactsTodayVar));
-            cursor.close();
-        }
-
+        // register receiver for broadcast when contact today is changed
         IntentFilter intentFilter = new IntentFilter("ACTION_update_contacts_today");
         getActivity().registerReceiver(receiver, intentFilter);
 
+        // Got about corona information page.
         goToCornaInfoBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -168,6 +172,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             }
         });
 
+        // Getting status of user from database.
         databaseReference = FirebaseDatabase.getInstance().getReference().child("Users");
         databaseReference.child(Main2Activity.myMacAdd).child("status").addValueEventListener(
                 new ValueEventListener() {
@@ -217,6 +222,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
                 }
         );
 
+        // get past 13 day sum of contacts.
         past13DaySum = findPast13DaySum();
 
         Log.i("Average contacts", String.valueOf((double)(past13DaySum+contactsTodayVar)/14));
@@ -247,6 +253,13 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         if (!zoneColorVar.equals("null")) {
             zoneColor.setText(zoneColorVar);
             zoneColor.setTextColor(getResources().getColor(R.color.colorPrimary));
+        }
+
+        Cursor cursor = myDb.getAllData();
+        if (cursor != null) {
+            contactsTodayVar = cursor.getCount();
+            todaysNum.setText(String.valueOf(contactsTodayVar));
+            cursor.close();
         }
     }
 
