@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Admin.DisplayActivity">
+
+    <TextView
+        android:id="@+id/id_displayContacts_text1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Direct contacts in last 14 days."
+        android:textAlignment="center"
+        android:textSize="18sp"
+        android:background="#692979"
+        android:padding="5dp"
+        android:textColor="#ffffff"
+        />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_below="@+id/id_displayContacts_text1"
+        android:id="@+id/id_directContacts_recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/id_displayContacts_text2"
+        android:background="@drawable/text_input_bg"
+        android:layout_margin="5dp"
+        />
+
+    <TextView
+        android:id="@+id/id_displayContacts_text2"
+        android:layout_centerVertical="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Indirect contacts in last 14 days."
+        android:textAlignment="center"
+        android:textSize="18sp"
+        android:background="#692979"
+        android:padding="5dp"
+        android:textColor="#ffffff"
+        />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/id_displayContacts_text2"
+        android:id="@+id/id_indirectContacts_recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/text_input_bg"
+        android:layout_margin="5dp"
+        />
+
+    <ProgressBar
+        android:id="@+id/displayContacts_progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:visibility="invisible"
+        android:layout_centerInParent="true"
+        />
+
+</RelativeLayout>

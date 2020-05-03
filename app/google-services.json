@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "24714165378",
+    "firebase_url": "https://ctssd-f9261.firebaseio.com",
+    "project_id": "ctssd-f9261",
+    "storage_bucket": "ctssd-f9261.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:24714165378:android:bce882314c76ff85f6889b",
+        "android_client_info": {
+          "package_name": "com.example.ctssd"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "24714165378-328qjv5evfta3rr8lipnfkv90kbbs6ed.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ctssd",
+            "certificate_hash": "9a2e479a946346c69847962a3f06be0eec41f536"
+          }
+        },
+        {
+          "client_id": "24714165378-1ppqqqf2ub2tpkfgrr30g36rgg54kki1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTIAUIp9SLBBBtGtdDNYi2yFg4-zzX82c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "24714165378-1ppqqqf2ub2tpkfgrr30g36rgg54kki1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

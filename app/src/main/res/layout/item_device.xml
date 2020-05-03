@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="10dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/info_card_background"
+    android:id="@+id/item_question_layout"
+    >
+
+    <ImageView
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="3dp"
+        android:id="@+id/phone"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/ic_phone_android_black_24dp"
+        />
+
+    <TextView
+        android:id="@+id/id_deviceName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="8dp"
+        android:layout_toRightOf="@id/phone"
+        android:fontFamily="@font/"
+        android:text="9909622595"
+        android:textColor="#242323"
+        android:textSize="16dp"
+        android:typeface="sans" />
+
+    <TextView
+        android:id="@+id/id_time"
+        android:layout_toRightOf="@id/phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/id_deviceName"
+        android:layout_marginLeft="11dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginRight="8dp"
+        android:fontFamily="@font/audiowide"
+        android:text="22:44"
+        android:textSize="13dp" />
+
+</RelativeLayout>

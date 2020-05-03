@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Admin.AdminHomeActivity">
+
+    <TextView
+        android:id="@+id/id_add_text1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add new corona patient in database."
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        />
+
+    <EditText
+        android:id="@+id/id_addNew_phone"
+        android:layout_below="@+id/id_add_text1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:hint="Phone no of patient"
+        android:padding="10dp"
+        android:background="@drawable/text_input_bg"
+        />
+
+    <Button
+        android:id="@+id/id_addNew_btn"
+        android:layout_below="@+id/id_addNew_phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:text="Add"
+        android:textAllCaps="false"
+        android:padding="10dp"
+        android:background="@drawable/buttons"
+        android:textColor="#ffffff"
+        />
+
+    <TextView
+        android:id="@+id/id_add_text2"
+        android:layout_below="@+id/id_addNew_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Search contacts of a person"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        />
+
+    <EditText
+        android:id="@+id/id_search_phone"
+        android:layout_below="@+id/id_add_text2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:hint="Phone number"
+        android:padding="10dp"
+        android:background="@drawable/text_input_bg"
+        />
+    <Button
+        android:id="@+id/id_search_btn"
+        android:layout_below="@+id/id_search_phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:text="Search"
+        android:textAllCaps="false"
+        android:padding="10dp"
+        android:background="@drawable/buttons"
+        android:textColor="#ffffff"
+        />
+
+    <ProgressBar
+        android:id="@+id/admin_home_progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:visibility="invisible"
+        android:layout_centerInParent="true"
+        />
+
+</RelativeLayout>

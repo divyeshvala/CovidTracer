@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activities.Fragments.Tab3">
+
+    <RadioGroup
+        android:id="@+id/id_radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="20dp"
+        >
+
+        <RadioButton
+            android:layout_weight="0.5"
+            android:id="@+id/id_last7Days"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Last 7 days"
+            android:checked="true"
+            />
+
+        <RadioButton
+            android:layout_weight="0.5"
+            android:id="@+id/id_7DaysAgo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="7 days ago"
+            android:layout_marginStart="30dp"
+            />
+
+    </RadioGroup>
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/barchart1"
+        android:layout_below="@+id/id_radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
+        android:visibility="visible"
+        />
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/barchart2"
+        android:layout_below="@+id/id_radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
+        android:visibility="invisible"
+        />
+
+</RelativeLayout>

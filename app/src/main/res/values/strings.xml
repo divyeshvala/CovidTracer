@@ -1,0 +1,39 @@
+<resources>
+    <string name="app_name">Covid Tracer</string>
+    <string name="app_tag">Protect yourself and others around you</string>
+
+    <string name="about_app1">This app will show you whether you have directly or
+                            indirectly contacted any Covid19 positive person.</string>
+    <string name="about_app2">It will also show you stats like risk index, graphs,
+                            average contacts in past 14 days etc.</string>
+    <string name="about_app3">This app helps tracking people you might
+                        have contacted in past 14 days if you are
+                        tested positive for Coronavirus.</string>
+    <string name="about_app4">This app only uses bluetooth for finding
+                    devices in your proximity. This app does not use or
+                    access your real location.</string>
+    <string name="about_app5">The permission asked for location is
+                        ACCESS_COARSE_LOCATION. So it does not access your
+                        accurate location. That permission is for bluetooth
+                        use only.</string>
+
+    <string name="howItSpreads">The virus that causes COVID-19 is mainly transmitted through droplets generated when an infected person coughs, sneezes, or exhales. These droplets are too heavy to hang in the air, and quickly fall on floors or surfaces.\n\n
+                                You can be infected by breathing in the virus if you are within close proximity of someone who has COVID-19, or by touching a contaminated surface and then your eyes, nose or mouth.</string>
+    <string name="common_symptoms">1. Fever.\n2. Tiredness.\n3. Dry cough.</string>
+    <string name="other_symptoms">1. Aches and pains.\n2. Nasal congestion.\n3. Runny nose.\n4. Sore throat.\n4. Diarrhoea.</string>
+
+    <string name="preventions"> 1. Clean your hands often. Use soap and water, or an alcohol-based hand rub.\n
+                                2. Maintain a safe distance from anyone who is coughing or sneezing.\n
+                                3. Don’t touch your eyes, nose or mouth.\n
+                                4. Cover your nose and mouth with your bent elbow or a tissue when you cough or sneeze.\n
+                                5. Stay home if you feel unwell.\n
+                                6. If you have a fever, a cough, and difficulty breathing, seek medical attention. Call in advance.\n
+                                7. Follow the directions of your local health authority.\n\n
+                                Avoiding unneeded visits to medical facilities allows healthcare systems to operate more effectively, therefore protecting you and others.</string>
+
+    <string name="self_care_treatments">1. If you feel sick you should rest, drink plenty of fluid, and eat nutritious food. Stay in a separate room from other family members, and use a dedicated bathroom if possible. Clean and disinfect frequently touched surfaces.\n
+                                        2. Everyone should keep a healthy lifestyle at home. Maintain a healthy diet, sleep, stay active, and make social contact with loved ones through the phone or internet. Children need extra love and attention from adults during difficult times. Keep to regular routines and schedules as much as possible.\n
+                                        3. It is normal to feel sad, stressed, or confused during a crisis. Talking to people you trust, such as friends and family, can help. If you feel overwhelmed, talk to a health worker or counsellor.</string>
+    <string name="medical_treatments">1. If you have mild symptoms and are otherwise healthy, self-isolate and contact your medical provider or a COVID-19 information line for advice.\n
+                                      2. Seek medical care if you have a fever, a cough, and difficulty breathing. Call in advance.</string>
+</resources>

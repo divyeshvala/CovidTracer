@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Admin.AdminLoginActivity">
+
+    <TextView
+        android:id="@+id/admin_login_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/open_sans_bold"
+        android:text="Verify you are Admin"
+        android:textColor="@color/colorPrimary"
+        android:textSize="22sp"
+        android:layout_centerHorizontal="true"
+        />
+
+    <TextView
+        android:id="@+id/admin_login_desc"
+        android:layout_below="@+id/admin_login_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/open_sans_semibold"
+        android:text="Please enter admin passwords"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_centerHorizontal="true"
+        />
+
+    <EditText
+        android:id="@+id/id_pswd"
+        android:layout_below="@+id/admin_login_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/text_input_bg"
+        android:ems="15"
+        android:fontFamily="@font/open_sans_semibold"
+        android:hint="Enter first password"
+        android:inputType="textPassword"
+        android:padding="16dp"
+        android:textSize="16sp"
+        android:layout_centerHorizontal="true"
+        />
+
+    <EditText
+        android:id="@+id/id_admin_pswd"
+        android:layout_below="@+id/id_pswd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/text_input_bg"
+        android:ems="15"
+        android:fontFamily="@font/open_sans_semibold"
+        android:hint="Enter second password"
+        android:inputType="textPassword"
+        android:padding="16dp"
+        android:textSize="16sp"
+        android:layout_centerHorizontal="true"
+        />
+
+    <RelativeLayout
+        android:id="@+id/admin_btnLayout"
+        android:layout_below="@+id/id_admin_pswd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="38dp"
+        android:layout_marginEnd="38dp"
+        >
+
+        <Button
+            android:id="@+id/id_verifyBTN"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/primary_btn_bg"
+            android:fontFamily="@font/open_sans_semibold"
+            android:text="Verify"
+            android:textAllCaps="false"
+            android:textColor="@android:color/background_light"
+            android:textSize="16sp"
+            android:padding="10dp"
+            />
+        <ProgressBar
+            android:id="@+id/admin_login_progress_bar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="16dp"
+            android:visibility="invisible"
+            android:layout_centerVertical="true"
+            />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/admin_login_form_feedback"
+        android:layout_below="@+id/admin_btnLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/open_sans_semibold"
+        android:text="Working . . ."
+        android:textColor="@android:color/holo_red_light"
+        android:visibility="invisible"
+        android:layout_centerHorizontal="true"
+        />
+</RelativeLayout>
