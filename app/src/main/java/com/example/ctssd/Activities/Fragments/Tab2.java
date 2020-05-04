@@ -139,6 +139,8 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         avgContactsInfo.setOnClickListener(this);
         locationAndZoneInfo.setOnClickListener(this);
 
+        myDb = new DatabaseHelper(getActivity());
+
         /** from here flow will be as follows
          * 1. ask user to make device discoverable
          * 2. go to onActivityResult. Call SetStatsValues() and getPermissions()
@@ -158,7 +160,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         // Assign values to the stats
         setStatsValues();
 
-        myDb = new DatabaseHelper(getActivity());
+
 
         // register receiver for broadcast when contact today is changed
         IntentFilter intentFilter = new IntentFilter("ACTION_update_contacts_today");
@@ -286,7 +288,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             startActivityForResult(enableBtIntent, 41);
         }
         else if(bluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
-            //bluetoothAdapter.setName(Main2Activity.myMacAdd);
+            bluetoothAdapter.setName(Main2Activity.myPhoneNumber);
             Log.i("tab2", "background service started");
             new Thread(new Runnable() {
                 @Override

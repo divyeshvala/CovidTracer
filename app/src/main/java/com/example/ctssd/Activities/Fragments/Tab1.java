@@ -6,19 +6,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.Adapter;
 import com.example.ctssd.Utils.DatabaseHelper;
@@ -27,6 +26,10 @@ import com.example.ctssd.Utils.Utilities;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Formatter;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 
 public class Tab1 extends Fragment {
 
@@ -152,31 +155,34 @@ public class Tab1 extends Fragment {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
                 String mac = device.getAddress();
+                String phone = device.getName();
                 if(mac==null || mac.equals(""))
                     mac = "null";
 
                 Calendar calendar = Calendar.getInstance();
                 String time = calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE);
                 Log.i("Tab1", "device found : "+serialNo);
-
-                //if(phone!=null && Utilities.isPhoneNoValid(phone))
-                //{
-                    boolean exists = false;
+                short rssi = intent.getExtras().getShort(BluetoothDevice.EXTRA_RSSI);
+                int iRssi = abs(rssi);
+                double power = (iRssi - 59) / 25.0;
+                String mm = new Formatter().format("%.2f", pow(10, power)).toString();
+                boolean exists = false;
+                if(Utilities.isPhoneNoValid(phone))
+                {
                     for(UserObject object : list )
                     {
-                        if(object.getPhone().equals(mac))
+                        if(object.getPhone().equals(phone))
                         {
                             exists = true;
                         }
                     }
                     if( !exists )
                     {
-                        //names.add(phone);
-                        list.add(new UserObject(mac, time));
+                        list.add(new UserObject(phone, mac+"    Dist.- "+mm+"m"));
                         serialNo++;
                         adapter.notifyDataSetChanged();
                     }
-               // }
+                }
             }
         }
     };

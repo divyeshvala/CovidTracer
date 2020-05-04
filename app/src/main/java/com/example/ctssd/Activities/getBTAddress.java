@@ -1,8 +1,5 @@
 package com.example.ctssd.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,6 +9,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ctssd.R;
 import com.google.firebase.database.DataSnapshot;
@@ -28,7 +28,7 @@ public class getBTAddress extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_btaddress);
 
-        Button submit = findViewById(R.id.id_submitMacBTN);
+        final Button submit = findViewById(R.id.id_submitMacBTN);
         TextView needHelp = findViewById(R.id.id_needHelp);
         final EditText macEditText = findViewById(R.id.id_macEditText);
 
@@ -44,6 +44,7 @@ public class getBTAddress extends AppCompatActivity
                 }
                 else
                 {
+                    submit.setEnabled(false);
                     setDetailsAndStatus(myMacAdd, phone);
                 }
             }
@@ -69,6 +70,7 @@ public class getBTAddress extends AppCompatActivity
 
                             Intent homeIntent = new Intent(getBTAddress.this, Main2Activity.class);
                             homeIntent.putExtra("myMacAdd", myMacAdd);
+                            homeIntent.putExtra("myPhoneNumber", phone);
                             homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(homeIntent);
@@ -77,6 +79,13 @@ public class getBTAddress extends AppCompatActivity
                         else
                         {
                             Log.i("Register", "dataSnapshot exists");
+                            Intent homeIntent = new Intent(getBTAddress.this, Main2Activity.class);
+                            homeIntent.putExtra("myMacAdd", myMacAdd);
+                            homeIntent.putExtra("myPhoneNumber", phone);
+                            homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(homeIntent);
+                            finish();
                         }
                     }
                     @Override

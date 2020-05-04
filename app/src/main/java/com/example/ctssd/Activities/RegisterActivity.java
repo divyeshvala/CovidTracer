@@ -1,8 +1,5 @@
 package com.example.ctssd.Activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,7 +11,9 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.example.ctssd.Admin.AdminHomeActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.ctssd.Admin.AdminLoginActivity;
 import com.example.ctssd.R;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -136,7 +135,8 @@ public class RegisterActivity extends AppCompatActivity {
         {
             SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
             String myMacAdd = settings.getString("myMacAdd", "");
-            sendUserToHome(myMacAdd);
+            String myPhoneNumber = settings.getString("myPhoneNumber", "");
+            sendUserToHome(myMacAdd, myPhoneNumber);
         }
     }
 
@@ -147,6 +147,10 @@ public class RegisterActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             //setDetailsAndStatus(myMacAdd, complete_phone_number);
+                            SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = settings.edit();
+                            editor.putString("myPhoneNumber", complete_phone_number);
+                            editor.apply();
                             sendUserToGetMac(complete_phone_number);
 
                         } else {
@@ -186,10 +190,11 @@ public class RegisterActivity extends AppCompatActivity {
         );
     }
 
-    private void sendUserToHome(String myMacAdd)
+    private void sendUserToHome(String myMacAdd, String myPhoneNumber)
     {
         Intent homeIntent = new Intent(RegisterActivity.this, Main2Activity.class);
         homeIntent.putExtra("myMacAdd", myMacAdd);
+        homeIntent.putExtra("myPhoneNumber", myPhoneNumber);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(homeIntent);

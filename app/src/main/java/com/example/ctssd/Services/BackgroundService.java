@@ -5,7 +5,6 @@
 
 package com.example.ctssd.Services;
 
-import android.app.AlertDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,9 +14,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
+
 import androidx.annotation.Nullable;
+
 import com.example.ctssd.Utils.DatabaseHelper;
-import com.example.ctssd.Utils.Utilities;
+
 import java.util.Calendar;
 
 public class BackgroundService extends Service
@@ -40,7 +41,6 @@ public class BackgroundService extends Service
         new Thread(new Runnable() {
             @Override
             public void run() {
-                int i=0;
 
                 // after some time discovery gets stop automatically to save battery. So we added while loop.
                 while(true){
@@ -55,13 +55,10 @@ public class BackgroundService extends Service
                         e.printStackTrace();
                     }
                     // send broadcast to update device list.
-                    i++;
-                    if(i%4==0)
-                    {
-                        // for updating list in Tab1.
-                        Intent intent = new Intent("ACTION_update_list");
-                        getApplication().sendBroadcast(intent);
-                    }
+
+                    // for updating list in Tab1.
+                    Intent intent = new Intent("ACTION_update_list");
+                    getApplication().sendBroadcast(intent);
                 }
             }
         }).start();

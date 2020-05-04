@@ -1,9 +1,11 @@
 package com.example.ctssd.Activities;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager.widget.ViewPager;
 import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.ViewPager;
+
 import com.example.ctssd.Activities.Fragments.Tab1;
 import com.example.ctssd.Activities.Fragments.Tab2;
 import com.example.ctssd.Activities.Fragments.Tab3;
@@ -16,6 +18,7 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
     public static String myMacAdd = "-1";
     private TabLayout tabLayout;
     private PagerAdapter adapter;
+    public static String myPhoneNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +26,7 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
         setContentView(R.layout.activity_main2);
 
         myMacAdd = getIntent().getStringExtra("myMacAdd");
+        myPhoneNumber = getIntent().getStringExtra("myPhoneNumber");
 
         new Thread( new Runnable() { @Override public void run() {
             Utilities utilities = new Utilities();
