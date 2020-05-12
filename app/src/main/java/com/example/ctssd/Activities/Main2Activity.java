@@ -16,18 +16,20 @@ import com.google.android.material.tabs.TabLayout;
 public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentInteractionListener, Tab2.OnFragmentInteractionListener, Tab3.OnFragmentInteractionListener {
 
     public static String myMacAdd = "-1";
+    public static String myPhoneNumber;
     private TabLayout tabLayout;
     private PagerAdapter adapter;
-    public static String myPhoneNumber;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
         myMacAdd = getIntent().getStringExtra("myMacAdd");
         myPhoneNumber = getIntent().getStringExtra("myPhoneNumber");
 
+        // Upload data to cloud.
         new Thread( new Runnable() { @Override public void run() {
             Utilities utilities = new Utilities();
             utilities.uploadDataToCloud(Main2Activity.this);

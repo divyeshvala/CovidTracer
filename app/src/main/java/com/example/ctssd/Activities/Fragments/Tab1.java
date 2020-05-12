@@ -1,7 +1,5 @@
 package com.example.ctssd.Activities.Fragments;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,39 +12,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.Adapter;
-import com.example.ctssd.Utils.DatabaseHelper;
 import com.example.ctssd.Utils.UserObject;
-import com.example.ctssd.Utils.Utilities;
-
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Formatter;
-
-import static java.lang.Math.abs;
-import static java.lang.Math.pow;
+import java.util.Objects;
 
 public class Tab1 extends Fragment {
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    public static int todaysContacts = 0;
-    private static final int REQUEST_ENABLE_BT = 1;
-    private ProgressBar progressBar;
-    private BluetoothAdapter bluetoothAdapter;
-    DatabaseHelper myDb;
-
-    public Adapter adapter;
+    private Adapter adapter;
     public static int serialNo = 1;
-    public static ArrayList<UserObject> list = new ArrayList<>();
-    //public static ArrayList<String> names = new ArrayList<>();
-    private long mTime;
+    private static ArrayList<UserObject> list = new ArrayList<>();
 
     private String mParam1;
     private String mParam2;
@@ -78,11 +62,10 @@ public class Tab1 extends Fragment {
 
         final View root = inflater.inflate(R.layout.fragment_tab1, container, false);
 
-        progressBar = root.findViewById(R.id.progress_bar);
+        ProgressBar progressBar = root.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
-        myDb = new DatabaseHelper(getActivity());
 
-        RecyclerView recyclerView = (RecyclerView) root.findViewById(R.id.id_home_recyclerView);
+        RecyclerView recyclerView = root.findViewById(R.id.id_home_recyclerView);
         recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setHasFixedSize(false);
         LinearLayoutManager questionListLayoutManager = new LinearLayoutManager(getActivity());
@@ -90,30 +73,35 @@ public class Tab1 extends Fragment {
         adapter = new Adapter(getActivity(), list);
         recyclerView.setAdapter(adapter);
 
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        // Intent filter for device discovered
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        getActivity().registerReceiver(receiver, filter);
-
-        bluetoothAdapter.startDiscovery();
-
         // Intent filter for updating device list. Broadcast will be sent from background process.
         IntentFilter intentFilter = new IntentFilter("ACTION_update_list");
-        getActivity().registerReceiver(updateListReceiver, intentFilter);
+        Objects.requireNonNull(getActivity()).registerReceiver(updateListReceiver, intentFilter);
 
         return root;
     }
 
     private BroadcastReceiver updateListReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) {
-            String message = intent.getAction();
-            Log.i("Tab1 receiver", message);
-            list.clear();
-            adapter.notifyDataSetChanged();
-            //names.clear();
-            serialNo=1;
+        public void onReceive(Context context, Intent intent)
+        {
+            Log.i("Tab1 receiver", "updateListReceiver");
+            String phone = intent.getStringExtra("phone");
+            String time = intent.getStringExtra("time");
+            String distance = intent.getStringExtra("distance");
+            boolean exists = false;
+
+            for(UserObject object : list )
+            {
+                if(object.getPhone().equals(phone))
+                {
+                    exists = true;
+                }
+            }
+            if( !exists )
+            {
+                list.add(new UserObject(phone, time+"    Dist.- "+distance+"m"));
+                adapter.notifyDataSetChanged();
+            }
         }
     };
 
@@ -124,7 +112,7 @@ public class Tab1 extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -144,56 +132,13 @@ public class Tab1 extends Fragment {
         void onFragmentInteraction(Uri uri);
     }
 
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent)
-        {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action))
-            {
-                // Discovery has found a device. Get the BluetoothDevice
-                // object and its info from the Intent.
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-
-                String mac = device.getAddress();
-                String phone = device.getName();
-                if(mac==null || mac.equals(""))
-                    mac = "null";
-
-                Calendar calendar = Calendar.getInstance();
-                String time = calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE);
-                Log.i("Tab1", "device found : "+serialNo);
-                short rssi = intent.getExtras().getShort(BluetoothDevice.EXTRA_RSSI);
-                int iRssi = abs(rssi);
-                double power = (iRssi - 59) / 25.0;
-                String mm = new Formatter().format("%.2f", pow(10, power)).toString();
-                boolean exists = false;
-                if(Utilities.isPhoneNoValid(phone))
-                {
-                    for(UserObject object : list )
-                    {
-                        if(object.getPhone().equals(phone))
-                        {
-                            exists = true;
-                        }
-                    }
-                    if( !exists )
-                    {
-                        list.add(new UserObject(phone, mac+"    Dist.- "+mm+"m"));
-                        serialNo++;
-                        adapter.notifyDataSetChanged();
-                    }
-                }
-            }
-        }
-    };
-
     @Override
     public void onDestroy() {
         super.onDestroy();
 
         try {
-            getActivity().unregisterReceiver(receiver);
-            getActivity().unregisterReceiver(updateListReceiver);
+            //getActivity().unregisterReceiver(receiver);
+            Objects.requireNonNull(getActivity()).unregisterReceiver(updateListReceiver);
         }catch (Exception e){
             e.printStackTrace();
         }

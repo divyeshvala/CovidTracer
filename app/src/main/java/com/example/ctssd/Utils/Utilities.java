@@ -35,7 +35,7 @@ public class Utilities
         editor.putInt("year", currentYear);
         editor.apply();
 
-        if(lastDay==0 || lastDay == currentDay)
+        if(lastDay==0 || lastDay == currentDay )
         {
             Log.i("Utilities", "lastday==currentday");
             if(lastDay==0)
@@ -45,7 +45,7 @@ public class Utilities
 
         // Upload data to database
         list = getLocalData(context);
-        DatabaseReference databaseReference = database.getReference("Users"+"/"+ Main2Activity.myMacAdd+"/"+
+        DatabaseReference databaseReference = database.getReference("Users"+"/"+ Main2Activity.myPhoneNumber+"/"+
                 lastYear+"/"+lastMonth+"/"+lastDay);
         for (UserObject object : list)
         {
@@ -95,20 +95,6 @@ public class Utilities
         cursor.close();
         myDb.deleteAllRecords();
         return list;
-    }
-
-    public static boolean isPhoneNoValid(String phone)
-    {
-        if(phone.length()<10)
-            return false;
-        for(int i=1; i<phone.length(); i++)
-        {
-            if((int) phone.charAt(i)> '9')
-            {
-                return false;
-            }
-        }
-        return true;
     }
 
     public static void showMessage(Context context, String title, String message)

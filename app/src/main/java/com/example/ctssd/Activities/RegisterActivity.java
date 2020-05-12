@@ -134,9 +134,9 @@ public class RegisterActivity extends AppCompatActivity {
         if(mCurrentUser!=null)
         {
             SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-            String myMacAdd = settings.getString("myMacAdd", "");
+            String myMacAdd = settings.getString("myMacAdd", "-1");
             String myPhoneNumber = settings.getString("myPhoneNumber", "");
-            sendUserToHome(myMacAdd, myPhoneNumber);
+            sendUserToHome( myPhoneNumber, myMacAdd);
         }
     }
 
@@ -146,12 +146,13 @@ public class RegisterActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            //setDetailsAndStatus(myMacAdd, complete_phone_number);
+                            setDetailsAndStatus(complete_phone_number);
                             SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                             SharedPreferences.Editor editor = settings.edit();
                             editor.putString("myPhoneNumber", complete_phone_number);
                             editor.apply();
-                            sendUserToGetMac(complete_phone_number);
+                            String myMacAdd = settings.getString("myMacAdd", "-1");
+                            sendUserToHome(complete_phone_number, myMacAdd);
 
                         } else {
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
@@ -166,18 +167,17 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    private void setDetailsAndStatus(final String myMacAdd, final String phone)
+    private void setDetailsAndStatus(final String phone)
     {
         final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference().child("Users");
-        dbRef.child(myMacAdd).child("status").addValueEventListener(
+        dbRef.child(phone).child("status").addValueEventListener(
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot)
                     {
                         if(!dataSnapshot.exists())
                         {
-                            dbRef.child(myMacAdd).child("status").setValue("safe");
-                            dbRef.child(myMacAdd).child("phone").setValue(phone);
+                            dbRef.child(phone).child("status").setValue("safe");
                         }
                         else
                         {
@@ -190,21 +190,11 @@ public class RegisterActivity extends AppCompatActivity {
         );
     }
 
-    private void sendUserToHome(String myMacAdd, String myPhoneNumber)
+    private void sendUserToHome(String myPhoneNumber, String myMacAdd)
     {
         Intent homeIntent = new Intent(RegisterActivity.this, Main2Activity.class);
-        homeIntent.putExtra("myMacAdd", myMacAdd);
         homeIntent.putExtra("myPhoneNumber", myPhoneNumber);
-        homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(homeIntent);
-        finish();
-    }
-
-    private void sendUserToGetMac(String phone)
-    {
-        Intent homeIntent = new Intent(RegisterActivity.this, getBTAddress.class);
-        homeIntent.putExtra("myPhoneNumber", phone);
+        homeIntent.putExtra("myMacAdd", myMacAdd);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(homeIntent);

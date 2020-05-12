@@ -1,8 +1,7 @@
 
-/** This background service will discover all devices
+/* This background service will discover all devices
  *  and add them to local storage.
  */
-
 package com.example.ctssd.Services;
 
 import android.app.Service;
@@ -14,17 +13,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
-
 import com.example.ctssd.Utils.DatabaseHelper;
-
 import java.util.Calendar;
+import java.util.Formatter;
+import java.util.Objects;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 
 public class BackgroundService extends Service
 {
-    DatabaseHelper myDb;
-    BluetoothAdapter bluetoothAdapter;
+    private static final String TAG = "BackgroundService";
+    private static final String AppId = "t1R2a3C2e1r";
+    private DatabaseHelper myDb;
+    private BluetoothAdapter bluetoothAdapter;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -35,33 +38,32 @@ public class BackgroundService extends Service
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, filter);
 
-        // TODO : It can be optimized. Instead of using while loop use intent filter to check
-        // when discovery is finished
+        // Register for broadcasts when discovery is finished so that we can start it again.
+        IntentFilter filter2 = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(receiver, filter2);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        bluetoothAdapter.startDiscovery();
 
-                // after some time discovery gets stop automatically to save battery. So we added while loop.
-                while(true){
-
-                    // start discovery for devices
-                    bluetoothAdapter.startDiscovery();
-
-                    Log.i("service", "discovery started");
-                    try {
-                        Thread.sleep(30000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    // send broadcast to update device list.
-
-                    // for updating list in Tab1.
-                    Intent intent = new Intent("ACTION_update_list");
-                    getApplication().sendBroadcast(intent);
-                }
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                // after some time discovery gets stop automatically to save battery. So we added while loop.
+//                while(true){
+//                    // start discovery for devices
+//                    Log.i(TAG, "discovery started");
+//                    try {
+//                        Thread.sleep(30000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    // send broadcast to update device list.
+//
+//                    // for updating list in Tab1.
+////                    Intent intent = new Intent("ACTION_update_list");
+////                    getApplication().sendBroadcast(intent);
+//                }
+//            }
+//        }).start();
         return START_REDELIVER_INTENT;
     }
 
@@ -96,17 +98,42 @@ public class BackgroundService extends Service
                 // Discovery has found a device. Get the BluetoothDevice
                 // object and its info from the Intent.
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                String mac = device.getAddress();
                 Calendar calendar = Calendar.getInstance();
+                String deviceName = device.getName();
                 String time = calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE);
 
-                myDb.insertData(mac, time);
-                Log.i("service", "device added :" +mac+" "+time+":"+calendar.get(Calendar.MILLISECOND));
+                short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);
+                int iRssi = abs(rssi);
+                double power = (iRssi - 59) / 25.0;
+                String mm = new Formatter().format("%.2f", pow(10, power)).toString();
 
-                // for updating contacts today in Tab2
-                Intent intent1 = new Intent("ACTION_update_contacts_today");
-                getApplication().sendBroadcast(intent1);
+                if(isNameValid(deviceName))
+                {
+                    String phone = deviceName.substring(11);
+                    myDb.insertData(phone, time);
+                    Log.i(TAG, "device added :" +phone+" "+time+":"+calendar.get(Calendar.MILLISECOND));
+
+                    // for updating contacts list in Tab1
+                    Intent intent1 = new Intent("ACTION_update_list");
+                    intent1.putExtra("distance", mm);
+                    intent1.putExtra("phone", phone);
+                    intent1.putExtra("time", time);
+                    getApplication().sendBroadcast(intent1);
+
+                    Intent intent2 = new Intent("ACTION_update_contacts_today");
+                    getApplication().sendBroadcast(intent2);
+                }
+            }
+            else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action))
+            {
+                Log.i(TAG, "ACTION_DISCOVERY_FINISHED");
+                bluetoothAdapter.startDiscovery();
             }
         }
     };
+
+    private boolean isNameValid(String name)
+    {
+        return name.contains(AppId);
+    }
 }

@@ -88,8 +88,7 @@ public class OtpActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            //setDetailsAndStatus(myMacAdd, phoneNum);
-                            sendUserToGetMac();
+                            sendUserToHome();
                             // ...
                         } else {
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
@@ -104,18 +103,17 @@ public class OtpActivity extends AppCompatActivity {
                 });
     }
 
-    private void setDetailsAndStatus(final String myMacAdd, final String phone)
+    private void setDetailsAndStatus(final String phone)
     {
         final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference().child("Users");
-        dbRef.child(myMacAdd).child("status").addValueEventListener(
+        dbRef.child(phone).child("status").addValueEventListener(
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot)
                     {
                         if(!dataSnapshot.exists())
                         {
-                            dbRef.child(myMacAdd).child("status").setValue("safe");
-                            dbRef.child(myMacAdd).child("phone").setValue(phone);
+                            dbRef.child(phone).child("status").setValue("safe");
                         }
                         else
                         {
@@ -136,11 +134,16 @@ public class OtpActivity extends AppCompatActivity {
 //        }
 //    }
 
-    public void sendUserToGetMac()
+    private void sendUserToHome()
     {
         String phone = getIntent().getStringExtra("myPhoneNumber");
-        Intent homeIntent = new Intent(OtpActivity.this, getBTAddress.class);
+        setDetailsAndStatus(phone);
+
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        String myMacAdd = settings.getString("myMacAdd", "-1");
+        Intent homeIntent = new Intent(OtpActivity.this, Main2Activity.class);
         homeIntent.putExtra("myPhoneNumber", phone);
+        homeIntent.putExtra("myMacAdd", myMacAdd);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(homeIntent);

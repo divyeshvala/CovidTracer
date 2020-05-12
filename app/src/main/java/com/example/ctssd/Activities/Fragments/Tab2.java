@@ -60,6 +60,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static android.content.Context.LOCATION_SERVICE;
 
@@ -76,7 +77,6 @@ public class Tab2 extends Fragment implements View.OnClickListener {
 
     private TextView todaysNum;
     private TextView riskIndexText, currentStatus, avgContacts, locationStat, zoneColor;
-    private Button goToCornaInfoBTN;
     private DatabaseHelper myDb;
     private DatabaseReference databaseReference;
     private static String currentStatusVar = "null", locationVar = "null", zoneColorVar = "null";
@@ -121,10 +121,10 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         currentStatusPBar = root.findViewById(R.id.id_currentStatus_progress_bar);
         riskIndexPBar = root.findViewById(R.id.riskIndex_progress_bar);
         averageContactsPBar = root.findViewById(R.id.averageContacts_progress_bar);
-        goToCornaInfoBTN = root.findViewById(R.id.id_goTo_CoronaInfoActivity);
         zoneColor = root.findViewById(R.id.id_zoneColor);
         locationStatPBar = root.findViewById(R.id.locationStat_progress_bar);
         zoneColorPBar = root.findViewById(R.id.zoneColor_progress_bar);
+        Button goToCornaInfoBTN = root.findViewById(R.id.id_goTo_CoronaInfoActivity);
 
         RelativeLayout statusInfo = root.findViewById(R.id.id_currentStatusLayout);
         RelativeLayout numbersInfo = root.findViewById(R.id.id_contactsTodayLayout);
@@ -141,7 +141,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
 
         myDb = new DatabaseHelper(getActivity());
 
-        /** from here flow will be as follows
+        /* from here flow will be as follows
          * 1. ask user to make device discoverable
          * 2. go to onActivityResult. Call SetStatsValues() and getPermissions()
          * 3. Go to onRequestPermissionResult and call setupBTAndStartService.
@@ -155,12 +155,10 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         startActivityForResult(dIntent, 45);
 
         // for getting lastLocation.
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
 
         // Assign values to the stats
         setStatsValues();
-
-
 
         // register receiver for broadcast when contact today is changed
         IntentFilter intentFilter = new IntentFilter("ACTION_update_contacts_today");
@@ -248,7 +246,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             avgContacts.setText(String.valueOf(avgNumVar));
             averageContactsPBar.setVisibility(View.INVISIBLE);
         }
-        if (!locationVar.equals("null")) {
+        if (locationVar!=null && (!locationVar.equals("null"))) {
             locationStat.setText(locationVar);
             locationStatPBar.setVisibility(View.INVISIBLE);
         }
@@ -290,11 +288,12 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         else if(bluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
             bluetoothAdapter.setName(Main2Activity.myPhoneNumber);
             Log.i("tab2", "background service started");
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     Intent intent = new Intent(getActivity(), BackgroundService.class);
-                    getContext().startService(intent);
+                    Objects.requireNonNull(getContext()).startService(intent);
                 }
             }).start();
 
@@ -306,8 +305,6 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent)
         {
-            String action = intent.getAction();
-
             Log.i("Tab2 Receiver", "updating contacts today");
             Cursor cursor = myDb.getAllData();
             if(cursor!=null) {
@@ -363,7 +360,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -383,7 +380,16 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.id_contactsTodayLayout:
-                Utilities.showMessage(getActivity(), "Todays Contacts", "Number of people that were in your range today.");
+                Cursor cursor = myDb.getAllData();
+                String list ="";
+                if(cursor!=null)
+                {
+                    while (cursor.moveToNext())
+                    {
+                        list += cursor.getString(0)+"  "+cursor.getString(1)+"\n";
+                    }
+                }
+                Utilities.showMessage(getActivity(), "Todays Contacts", list);
                 return;
             case R.id.id_averageContactsLayout:
                 Utilities.showMessage(getActivity(), "Average", "Average number of people you have contacted in last 14 days.");
@@ -408,7 +414,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     private void getLocation() {
 
         Log.i("Location", "inside get location");
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(Objects.requireNonNull(getActivity()), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Log.i("Location", "permission is there");
             fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
                 @Override
@@ -444,7 +450,6 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             startActivityForResult(intent, 42);
             Log.i("Loc", "getting permission");
         } else {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
             LocationRequest mLocationRequest = new LocationRequest();
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             //mLocationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
@@ -452,7 +457,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             mLocationRequest.setFastestInterval(0);
             mLocationRequest.setNumUpdates(1);
             Log.i("Loc", "looper");
-            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
             fusedLocationProviderClient.requestLocationUpdates(
                     mLocationRequest, mLocationCallback,
                     Looper.myLooper()
@@ -516,7 +521,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
                     if(dataSnapshot.exists())
                     {
                          String list = dataSnapshot.getValue(String.class);
-                         if(list!=null && cityName!=null && (list.contains(cityName) || list.contains(area)))
+                         if(list!=null && (list.contains(cityName) || list.contains(area)))
                          {
                              zoneColorVar = "(Red zone)";
                              zoneColor.setText(zoneColorVar);
@@ -556,11 +561,11 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     }
 
     private boolean isLocationEnabled_Network() {
-        LocationManager locationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) Objects.requireNonNull(getContext()).getSystemService(LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
     private boolean isLocationEnabled_GPS() {
-        LocationManager locationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) Objects.requireNonNull(getContext()).getSystemService(LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
@@ -623,7 +628,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     public void onDestroy() {
         super.onDestroy();
         try {
-            getActivity().unregisterReceiver(receiver);
+            Objects.requireNonNull(getActivity()).unregisterReceiver(receiver);
         }catch (Exception e)
         {
             e.printStackTrace();
