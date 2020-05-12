@@ -2,6 +2,7 @@
 /* This background service will discover all devices
  *  and add them to local storage.
  */
+
 package com.example.ctssd.Services;
 
 import android.app.Service;
@@ -11,11 +12,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
+
 import androidx.annotation.Nullable;
 import com.example.ctssd.Utils.DatabaseHelper;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Formatter;
 import java.util.Objects;
 
@@ -29,10 +33,18 @@ public class BackgroundService extends Service
     private DatabaseHelper myDb;
     private BluetoothAdapter bluetoothAdapter;
 
+    public static Date startTime;
+    public static float prevBTOnTime;
+
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         myDb = new DatabaseHelper(getApplicationContext());
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        startTime = new Date();
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        prevBTOnTime = settings.getFloat("bluetoothTime", 0);
 
         // Register for broadcasts when a device is discovered.
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -78,6 +90,35 @@ public class BackgroundService extends Service
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        // updating total time the bluetooth is on.
+        long elevenPM = 82800000;
+        long sixAM = 21600000;
+        Date endTime = new Date();
+
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        float currentBluetoothTime;
+        if(startTime.getTime()<sixAM)
+        {
+            currentBluetoothTime = (endTime.getTime()-sixAM)/3600000;
+            editor.putFloat("bluetoothTime", prevBTOnTime + (currentBluetoothTime));
+        }
+        else if(endTime.getTime()>elevenPM)
+        {
+            currentBluetoothTime = (int) ( elevenPM-startTime.getTime())/3600000;
+            editor.putFloat("bluetoothTime", prevBTOnTime + (currentBluetoothTime));
+        }
+        else
+        {
+            currentBluetoothTime = (int) ( endTime.getTime()-startTime.getTime())/3600000;
+            editor.putFloat("bluetoothTime", prevBTOnTime + (currentBluetoothTime));
+        }
+        editor.apply();
+        startTime = new Date();
+
+        Log.i(TAG, "CurrentBTtime :"+currentBluetoothTime);
+
         try {
             // don't forget to unregister receiver
             unregisterReceiver(receiver);
