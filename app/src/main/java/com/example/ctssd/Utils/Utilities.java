@@ -6,11 +6,13 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.util.Log;
 import com.example.ctssd.Activities.Main2Activity;
+import com.example.ctssd.Services.BackgroundService;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class Utilities
 {
@@ -104,6 +106,28 @@ public class Utilities
         builder.setTitle(title);
         builder.setMessage(message);
         builder.show();
+    }
+
+    public int getTotalBluetoothOffTime(Context context)
+    {
+        SharedPreferences settings = context.getSharedPreferences("MySharedPref", context.MODE_PRIVATE);
+
+        Date endTime = new Date();
+        long diffMs = BackgroundService.startTime.getTime() - endTime.getTime();
+        long diffSec = diffMs / 1000;
+        long currentBluetoothTime = diffSec / 3600;
+        int totalBTOnTime = settings.getInt("bluetoothTime", 0) + (int)currentBluetoothTime;
+
+        Calendar c1 = Calendar.getInstance();
+        c1.set(Calendar.MONTH, settings.getInt("startingDay", 0));
+        c1.set(Calendar.DATE, settings.getInt("startingMonth", 0));
+        c1.set(Calendar.YEAR, settings.getInt("startingYear", 0));
+
+        Date startDate = c1.getTime();
+        int totalNumberOfDays = (int) TimeUnit.DAYS.convert(endTime.getTime()-startDate.getTime(), TimeUnit.MILLISECONDS);
+        int totalHours = totalNumberOfDays * 17; // 6AM - 11PM
+
+        return totalHours - totalBTOnTime;
     }
 
     private void inserLocalDataZeroes()
