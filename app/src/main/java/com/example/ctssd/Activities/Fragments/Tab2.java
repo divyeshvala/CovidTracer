@@ -275,21 +275,10 @@ public class Tab2 extends Fragment implements View.OnClickListener
     {
         SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
         riskIndexPBar.setVisibility(View.VISIBLE);
-        // get list of contacts and their risk
-        Cursor cursor = myDb.getAllData();
-        int sum=0, count=0;
-        if(cursor!=null)
-        {
-            while (cursor.moveToNext())
-            {
-                sum += cursor.getInt(2);
-                count++;
-            }
-        }
 
-        // Now we calculate risk index
-        // 1. average risk factors of contacts
+        // 1. max risk factors of contacts
         int fromContactsRiskMax=0;
+        Cursor cursor = myDb.getAllData();
         if(cursor!=null)
         {
             while (cursor.moveToNext())
@@ -300,6 +289,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
         }
         if(fromContactsRiskMax>preContactsRiskMax)
         {
+            if(fromContactsRiskMax>20)
+                fromContactsRiskMax=20;
             preContactsRiskMax = fromContactsRiskMax;
             SharedPreferences.Editor ed = settings.edit();
             ed.putInt("preContactsRiskMax", preContactsRiskMax);
