@@ -164,7 +164,11 @@ public class Utilities
         Calendar startTime = BackgroundService.startTime;
         Calendar endTime = Calendar.getInstance();
 
+        if(startTime==null)
+            return 0;
+
         float currentBluetoothTime=0;
+
         if(startTime.get(Calendar.HOUR_OF_DAY)<6)
         {
             currentBluetoothTime = 0;
