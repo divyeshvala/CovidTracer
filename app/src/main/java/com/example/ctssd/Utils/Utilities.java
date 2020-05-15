@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Utilities
 {
+    private static final String TAG = "Utilities";
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseHelper myDb;
     private ArrayList<UserObject> list = new ArrayList<>();
@@ -44,6 +45,13 @@ public class Utilities
                 inserLocalDataZeroes();
             return;
         }
+        // update preFromContactsToday
+        SharedPreferences.Editor ed = settings.edit();
+        ed.putInt("preFromContactsToday", settings.getInt("preFromContactsToday", 0)+settings.getInt("todaysFromContactsToday", 0));
+
+        // update number of days since installation.
+        ed.putInt("totalDays", settings.getInt("totalDays", 1)+1);
+        ed.apply();
 
         // Upload data to database
         list = getLocalData(context);
@@ -90,7 +98,7 @@ public class Utilities
             return list;
         }
 
-        while( cursor.moveToNext())
+        while(cursor.moveToNext())
         {
             list.add(new UserObject(cursor.getString(0), cursor.getString(1)));
         }
@@ -108,26 +116,81 @@ public class Utilities
         builder.show();
     }
 
-    public int getTotalBluetoothOffTime(Context context)
+    public float getTotalBluetoothOffTime(Context context)
     {
+        float currentBluetoothTime = getCurrentBTOnTime();
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", context.MODE_PRIVATE);
+        float prevBTOnTime = settings.getFloat("bluetoothTime", 0);
+        float totalBTOnTime =  prevBTOnTime+ currentBluetoothTime;
 
-        Date endTime = new Date();
-        long diffMs = BackgroundService.startTime.getTime() - endTime.getTime();
-        long diffSec = diffMs / 1000;
-        long currentBluetoothTime = diffSec / 3600;
-        int totalBTOnTime = settings.getInt("bluetoothTime", 0) + (int)currentBluetoothTime;
-
+        Calendar endTime = Calendar.getInstance();
         Calendar c1 = Calendar.getInstance();
-        c1.set(Calendar.MONTH, settings.getInt("startingDay", 0));
-        c1.set(Calendar.DATE, settings.getInt("startingMonth", 0));
-        c1.set(Calendar.YEAR, settings.getInt("startingYear", 0));
+        c1.set(Calendar.MONTH, settings.getInt("startingMonth", c1.get(Calendar.MONTH)));
+        c1.set(Calendar.DAY_OF_MONTH, settings.getInt("startingDay", c1.get(Calendar.DAY_OF_MONTH)));
+        c1.set(Calendar.YEAR, settings.getInt("startingYear", c1.get(Calendar.YEAR)));
+        c1.set(Calendar.HOUR_OF_DAY, settings.getInt("startingHour", c1.get(Calendar.HOUR_OF_DAY)));
+        c1.set(Calendar.MINUTE, settings.getInt("startingMinute", c1.get(Calendar.MINUTE)));
 
-        Date startDate = c1.getTime();
-        int totalNumberOfDays = (int) TimeUnit.DAYS.convert(endTime.getTime()-startDate.getTime(), TimeUnit.MILLISECONDS);
-        int totalHours = totalNumberOfDays * 17; // 6AM - 11PM
+        float totalHours;
+        if(endTime.get(Calendar.DAY_OF_MONTH)==c1.get(Calendar.DAY_OF_MONTH) && endTime.get(Calendar.MONTH)==c1.get(Calendar.MONTH))
+        {
+            totalHours = endTime.get(Calendar.HOUR_OF_DAY)-c1.get(Calendar.HOUR_OF_DAY);
+            Log.i(TAG, "Same day. totalHours :"+totalHours);
+        }
+        else
+        {
+            int startDayHours = 23 - c1.get(Calendar.HOUR_OF_DAY);
+            int endDayHours = endTime.get(Calendar.HOUR_OF_DAY)-6;
+            c1.set(Calendar.HOUR_OF_DAY, 23);
+            endTime.set(Calendar.HOUR_OF_DAY, 1);
+            int totaldays = (int) TimeUnit.DAYS.convert(endTime.getTime().getTime()-c1.getTime().getTime(), TimeUnit.MILLISECONDS);
+            totalHours = startDayHours + endDayHours + totaldays*17;
+        }
 
-        return totalHours - totalBTOnTime;
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putFloat("bluetoothTime", totalBTOnTime);
+        editor.apply();
+        BackgroundService.startTime = Calendar.getInstance();
+
+        Log.i(TAG, "TotalBtOnTime :"+totalBTOnTime);
+
+        if(totalHours-totalBTOnTime>0)
+            return (totalHours - totalBTOnTime);
+        return 0;
+    }
+
+    private float getCurrentBTOnTime()
+    {
+        Calendar startTime = BackgroundService.startTime;
+        Calendar endTime = Calendar.getInstance();
+
+        float currentBluetoothTime=0;
+        if(startTime.get(Calendar.HOUR_OF_DAY)<6)
+        {
+            currentBluetoothTime = 0;
+            if(endTime.get(Calendar.HOUR_OF_DAY)-6 >= 0)
+            {
+                currentBluetoothTime += endTime.get(Calendar.HOUR_OF_DAY)-6;
+                currentBluetoothTime += endTime.get(Calendar.MINUTE)/60.0 ;
+            }
+            Log.i(TAG, "CurrentBTTime1 :"+currentBluetoothTime);
+        }
+        else if(endTime.get(Calendar.HOUR_OF_DAY)==23)
+        {
+            currentBluetoothTime = 0;
+            if( 11-startTime.get(Calendar.HOUR_OF_DAY) > 0)
+            {
+                currentBluetoothTime += 23-startTime.get(Calendar.HOUR_OF_DAY)-1;
+                currentBluetoothTime += (60-startTime.get(Calendar.MINUTE))/60.0 ;
+            }
+            Log.i(TAG, "CurrentBTTime1 :"+currentBluetoothTime);
+        }
+        else
+        {
+            currentBluetoothTime = (float) ( endTime.getTime().getTime()-startTime.getTime().getTime())/3600000;
+            Log.i(TAG, "CurrentBTTime3 :"+currentBluetoothTime);
+        }
+        return currentBluetoothTime;
     }
 
     private void inserLocalDataZeroes()

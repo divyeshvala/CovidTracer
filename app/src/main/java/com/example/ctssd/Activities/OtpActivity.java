@@ -28,18 +28,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Calendar;
+
 public class OtpActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser mCurrentUser;
-
     private String mAuthVerificationId;
-
     private EditText mOtpText;
     private Button mVerifyBtn;
-
     private ProgressBar mOtpProgress;
-
     private TextView mOtpFeedback;
 
     @Override
@@ -60,8 +58,8 @@ public class OtpActivity extends AppCompatActivity {
 
         mVerifyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-
+            public void onClick(View v)
+            {
                 String otp = mOtpText.getText().toString();
 
                 if(otp.isEmpty()){
@@ -88,6 +86,18 @@ public class OtpActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+
+                            SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = settings.edit();
+                            editor.putString("myPhoneNumber", getIntent().getStringExtra("myPhoneNumber"));
+                            Calendar c1 = Calendar.getInstance();
+                            editor.putInt("startingDay", c1.get(Calendar.DAY_OF_MONTH));
+                            editor.putInt("startingMonth", c1.get(Calendar.MONTH));
+                            editor.putInt("startingYear", c1.get(Calendar.YEAR));
+                            editor.putInt("startingHour", c1.get(Calendar.HOUR_OF_DAY));
+                            editor.putInt("startingMinute", c1.get(Calendar.MINUTE));
+                            editor.apply();
+
                             sendUserToHome();
                             // ...
                         } else {
@@ -126,24 +136,17 @@ public class OtpActivity extends AppCompatActivity {
         );
     }
 
-//    @Override
-//    protected void onStart() {
-//        super.onStart();
-//        if(mCurrentUser != null){
-//            sendUserToHome();
-//        }
-//    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(mCurrentUser != null){
+            sendUserToHome();
+        }
+    }
 
     private void sendUserToHome()
     {
-        String phone = getIntent().getStringExtra("myPhoneNumber");
-        setDetailsAndStatus(phone);
-
-        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        String myMacAdd = settings.getString("myMacAdd", "-1");
-        Intent homeIntent = new Intent(OtpActivity.this, Main2Activity.class);
-        homeIntent.putExtra("myPhoneNumber", phone);
-        homeIntent.putExtra("myMacAdd", myMacAdd);
+        Intent homeIntent = new Intent(OtpActivity.this, GetPermissionsActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(homeIntent);

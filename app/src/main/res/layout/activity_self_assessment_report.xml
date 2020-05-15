@@ -1,9 +1,385 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#ffffff"
     tools:context=".Activities.SelfAssessmentReport">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:id="@+id/id_selfAssess_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/bg_gradient"
+        android:fontFamily="@font/aldrich"
+        android:padding="10dp"
+        android:text="Self Assessment Report"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="20sp"
+        />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/id_selfAssess_title"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="-3dp">
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/card_background_">
+
+                <TextView
+                    android:id="@+id/id_selfAssess_symptoms_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:padding="8dp"
+                    android:text="Are you experiencing any of the following symptoms?"
+                    android:textColor="#3C3A3A"
+                    android:textSize="18sp" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_symptoms_cold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/id_selfAssess_symptoms_title"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
+                    android:text="Cold" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_symptoms_fever"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/id_selfAssess_symptoms_title"
+                    android:layout_marginStart="70dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_toEndOf="@+id/id_selfAssess_symptoms_cold"
+                    android:text="Fever" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_symptoms_soreThroat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/id_selfAssess_symptoms_cold"
+                    android:layout_marginStart="20dp"
+                    android:text="Sore throat" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_symptoms_difficultyBreathing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/id_selfAssess_symptoms_cold"
+                    android:layout_marginStart="70dp"
+                    android:layout_toEndOf="@+id/id_selfAssess_symptoms_cold"
+                    android:text="Difficulty breathing" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/card_background_">
+
+                <TextView
+                    android:id="@+id/id_selfAssess_disease_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:padding="8dp"
+                    android:text="Have you ever had any of this?"
+                    android:textColor="#3C3A3A"
+                    android:textSize="18sp" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_disease_diabetes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/id_selfAssess_disease_title"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
+                    android:text="Diabetes" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_disease_hypertension"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/id_selfAssess_disease_title"
+                    android:layout_marginStart="70dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_toEndOf="@+id/id_selfAssess_disease_diabetes"
+                    android:text="Hypertension" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/card_background_">
+
+                <TextView
+                    android:id="@+id/id_selfAssess_status_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:padding="8dp"
+                    android:text="Which of the following applies to you?"
+                    android:textColor="#3C3A3A"
+                    android:textSize="18sp" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_status_interacted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/id_selfAssess_status_title"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
+                    android:lineSpacingExtra="0.4dp"
+                    android:text="I have recently interacted with someone who has tested positive for Covid19" />
+
+                <CheckBox
+                    android:id="@+id/id_selfAssess_status_healthcareWorker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/id_selfAssess_status_interacted"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
+                    android:lineSpacingExtra="0.4dp"
+                    android:text="I am a healthcare worker and I have examined a Covid19 positive person" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/card_background_">
+
+                <TextView
+                    android:id="@+id/id_selfAssess_profession_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:padding="8dp"
+                    android:text="Your profession"
+                    android:textColor="#3C3A3A"
+                    android:textSize="18sp" />
+
+                <RadioGroup
+                    android:id="@+id/id_selfAssess_profession"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/id_selfAssess_profession_title">
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_profession_doctor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Doctor/nurse" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_profession_delivery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Delivery" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_profession_wholeseller"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Wholeseller" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_profession_chemist"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Chemist" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_profession_police"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Police" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_profession_other"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Other" />
+
+                </RadioGroup>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/card_background_">
+
+                <TextView
+                    android:id="@+id/id_selfAssess_countries_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:padding="8dp"
+                    android:text="Have you travelled to another country in last 30 days?"
+                    android:textColor="#3C3A3A"
+                    android:textSize="18sp" />
+
+                <RadioGroup
+                    android:id="@+id/id_selfAssess_travel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/id_selfAssess_countries_title">
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_countries_yes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Yes" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_countries_no"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="No" />
+                </RadioGroup>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/card_background_">
+
+                <TextView
+                    android:id="@+id/id_selfAssess_age_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:padding="8dp"
+                    android:text="Your age?"
+                    android:textColor="#3C3A3A"
+                    android:textSize="18sp" />
+
+                <RadioGroup
+                    android:id="@+id/id_selfAssess_age"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/id_selfAssess_age_title">
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_age_below10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Below 10" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_age_above60"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Above 60" />
+
+                    <RadioButton
+                        android:id="@+id/id_selfAssess_age_inBetween"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:text="Between 10 and 60" />
+                </RadioGroup>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/info_card_background">
+
+                <Button
+                    android:id="@+id/id_selfAssess_submitBTN"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:background="@drawable/primary_btn_bg"
+                    android:text="Submit"
+                    android:textColor="#ffffff" />
+            </RelativeLayout>
+
+        </TableLayout>
+    </ScrollView>
+
+    <ProgressBar
+        android:id="@+id/progress_bar_selfAssess"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:visibility="invisible"
+        android:layout_centerInParent="true"
+        />
+
+</RelativeLayout>

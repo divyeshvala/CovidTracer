@@ -1,8 +1,8 @@
 package com.example.ctssd.Utils;
 public class UserObject
 {
-    String phone;
-    String time;
+    private String phone;
+    private String time;
     public UserObject(String phone, String time)
     {
         this.phone = phone;

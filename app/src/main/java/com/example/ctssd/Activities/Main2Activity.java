@@ -1,5 +1,6 @@
 package com.example.ctssd.Activities;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -26,8 +27,8 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-        myMacAdd = getIntent().getStringExtra("myMacAdd");
-        myPhoneNumber = getIntent().getStringExtra("myPhoneNumber");
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        myPhoneNumber = settings.getString("myPhoneNumber", "NA");
 
         // Upload data to cloud.
         new Thread( new Runnable() { @Override public void run() {

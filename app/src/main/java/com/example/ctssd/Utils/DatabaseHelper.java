@@ -22,7 +22,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     @Override
     public void onCreate(SQLiteDatabase db)
     {
-        String table1 = "CREATE TABLE "+ TABLE1 + "(PHONE TEXT PRIMARY KEY, TIME TEXT)";
+        String table1 = "CREATE TABLE "+ TABLE1 + "(PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER)";
         String table2 = "CREATE TABLE "+ TABLE2 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, count INTEGER)";
         db.execSQL(table1);
         db.execSQL(table2);
@@ -38,13 +38,14 @@ public class DatabaseHelper extends SQLiteOpenHelper
         onCreate(db);
     }
 
-    public boolean insertData(String phone, String time)
+    public boolean insertData(String phone, String time, int riskIndex)
     {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues contentValues = new ContentValues();
         contentValues.put("PHONE", phone);
         contentValues.put("TIME", time);
+        contentValues.put("RISK", riskIndex);
         long res = db.insertWithOnConflict("table1", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
 
         if(res == -1)

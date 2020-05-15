@@ -14,6 +14,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".Activities.SelfAssessmentReport"></activity>
+        <activity android:name=".Activities.GetPermissionsActivity" />
         <activity android:name=".Activities.CoronaInfoActivity" />
         <activity android:name=".Admin.DisplayActivity" />
         <activity android:name=".Admin.AdminHomeActivity" />

@@ -17,10 +17,16 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.Adapter;
+import com.example.ctssd.Utils.DeviceDetailsObject;
 import com.example.ctssd.Utils.UserObject;
+import com.example.ctssd.Utils.Utilities;
+
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class Tab1 extends Fragment {
@@ -31,6 +37,7 @@ public class Tab1 extends Fragment {
     private Adapter adapter;
     public static int serialNo = 1;
     private static ArrayList<UserObject> list = new ArrayList<>();
+    private static HashMap<String, DeviceDetailsObject> map = new HashMap<>();
 
     private String mParam1;
     private String mParam2;
@@ -77,6 +84,9 @@ public class Tab1 extends Fragment {
         IntentFilter intentFilter = new IntentFilter("ACTION_update_list");
         Objects.requireNonNull(getActivity()).registerReceiver(updateListReceiver, intentFilter);
 
+        IntentFilter intentFilter2 = new IntentFilter("REMOVE_OUT_OF_RANGE_DEVICES");
+        Objects.requireNonNull(getActivity()).registerReceiver(updateListReceiver, intentFilter2);
+
         return root;
     }
 
@@ -84,23 +94,46 @@ public class Tab1 extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            Log.i("Tab1 receiver", "updateListReceiver");
-            String phone = intent.getStringExtra("phone");
-            String time = intent.getStringExtra("time");
-            String distance = intent.getStringExtra("distance");
-            boolean exists = false;
+            String action = intent.getAction();
+            if(action!=null && action.equals("ACTION_update_list"))
+            {
+                Log.i("Tab1 receiver", "updateListReceiver");
+                String phone = intent.getStringExtra("phone");
+                String distance = intent.getStringExtra("distance");
+                int riskIndex = intent.getIntExtra("riskIndex", 0);
+                boolean exists = false;
 
-            for(UserObject object : list )
-            {
-                if(object.getPhone().equals(phone))
+                for(UserObject object : list)
                 {
-                    exists = true;
+                    if(object.getPhone().equals(phone)) {
+                        list.remove(object);
+                        break;
+                    }
                 }
-            }
-            if( !exists )
-            {
-                list.add(new UserObject(phone, time+"    Dist.- "+distance+"m"));
+
+                map.put(phone, new DeviceDetailsObject(Calendar.getInstance(), distance, riskIndex));
+                list.add(new UserObject(phone, "Dist.-"+distance+"   RI-"+riskIndex));
                 adapter.notifyDataSetChanged();
+            }
+            else if(action!=null && action.equals("REMOVE_OUT_OF_RANGE_DEVICES"))
+            {
+                for(HashMap.Entry element : map.entrySet())
+                {
+                    String ph = (String) element.getKey();
+                    DeviceDetailsObject object = (DeviceDetailsObject) element.getValue();
+                    if(Calendar.getInstance().getTime().getTime()-object.getTime().getTime().getTime()>10000)
+                    {
+                        map.remove(ph);
+                        for(UserObject obj : list)
+                        {
+                            if(obj.getPhone().equals(ph)) {
+                                list.remove(obj);
+                                adapter.notifyDataSetChanged();
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
     };
@@ -143,4 +176,5 @@ public class Tab1 extends Fragment {
             e.printStackTrace();
         }
     }
+
 }

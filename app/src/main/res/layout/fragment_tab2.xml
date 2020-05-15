@@ -60,14 +60,14 @@
     </RelativeLayout>
 
     <TableRow
-        android:layout_weight="0.6"
+        android:layout_weight="0.55"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:orientation="horizontal"
         android:layout_marginEnd="10dp"
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="5dp"
         >
         <TableRow
             android:layout_weight="0.5"
@@ -272,23 +272,43 @@
                 </RelativeLayout>
 
             </LinearLayout>
-
-
         </TableRow>
-
     </TableRow>
 
-    <Button
-        android:id="@+id/id_goTo_CoronaInfoActivity"
+    <TableRow
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Helpful information about Covid19"
-        android:textAllCaps="false"
-        android:background="@drawable/btn_background_red"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:layout_margin="10dp"
-        android:textColor="#ffffff"
-        />
+        android:layout_height="0dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        >
+        <Button
+            android:id="@+id/id_goTo_CoronaInfoActivity"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Info"
+            android:textAllCaps="false"
+            android:background="@drawable/btn_background_red"
+            android:textColor="#ffffff"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="5dp"
+            style="@style/Widget.AppCompat.ButtonBar"
+            />
+        <Button
+            android:id="@+id/id_selfAssessBTN"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Self Assess"
+            android:textAllCaps="false"
+            android:background="@drawable/btn_background_red"
+            android:textColor="#ffffff"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="5dp"
+            style="@style/Widget.AppCompat.ButtonBar"
+            />
+    </TableRow>
 
 </TableLayout>

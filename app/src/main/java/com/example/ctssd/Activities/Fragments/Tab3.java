@@ -9,6 +9,8 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class Tab3 extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -143,7 +146,7 @@ public class Tab3 extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -259,7 +262,7 @@ public class Tab3 extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         try {
-            getActivity().unregisterReceiver(receiver);
+            Objects.requireNonNull(getActivity()).unregisterReceiver(receiver);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -268,7 +271,7 @@ public class Tab3 extends Fragment {
     public class MyXAxisValueFormatter extends IndexAxisValueFormatter {
         private String[] list;
 
-        public MyXAxisValueFormatter(String[] list)
+        private MyXAxisValueFormatter(String[] list)
         {
             this.list = list;
         }
