@@ -105,7 +105,8 @@ public class Tab1 extends Fragment {
 
                 for(UserObject object : list)
                 {
-                    if(object.getPhone().equals(phone)) {
+                    if(object.getPhone().equals(phone))
+                    {
                         list.remove(object);
                         break;
                     }

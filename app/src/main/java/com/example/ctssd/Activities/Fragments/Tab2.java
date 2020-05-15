@@ -5,11 +5,13 @@
 
 package com.example.ctssd.Activities.Fragments;
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -43,12 +45,18 @@ import com.example.ctssd.Activities.SelfAssessmentReport;
 import com.example.ctssd.R;
 import com.example.ctssd.Services.BackgroundService;
 import com.example.ctssd.Utils.DatabaseHelper;
+import com.example.ctssd.Utils.GetLocation;
 import com.example.ctssd.Utils.Utilities;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
@@ -86,7 +94,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
     private static double avgNumVar = -1.0;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private int requestLocEnableCount = 0, requestPermSecCount=0;
-    private static int contactsTodayVar = 0, past13DaySum=0, totalDays=1, preContactsRiskMax=0, preFromContactsToday=0;
+    private static int contactsTodayVar = 0, past13DaySum=0, totalDays=1, preContactsRiskMax=0, preFromContactsToday=0, tryingForLocationCount=0;
     private static HashMap<String, Integer> messageForRiskIndex = new HashMap<>();
     private static long preCrowdTime = -1;
 
@@ -172,7 +180,12 @@ public class Tab2 extends Fragment implements View.OnClickListener
         // Assign values to the stats
         setStatsValues();
 
-        getLocation();
+        IntentFilter intentFilter3 = new IntentFilter("LOCATION_FOUND"); getActivity().registerReceiver(locationReceiver, intentFilter3);
+        IntentFilter intentFilter4 = new IntentFilter("GPS_PERMISSION"); getActivity().registerReceiver(locationReceiver, intentFilter4);
+        IntentFilter intentFilter5 = new IntentFilter("ENABLE_GPS"); getActivity().registerReceiver(locationReceiver, intentFilter5);
+        IntentFilter intentFilter6 = new IntentFilter("GET_LOCATION_PERMISSION"); getActivity().registerReceiver(locationReceiver, intentFilter6);
+
+        findLocation();
 
         // get past 13 day sum of contacts.
         past13DaySum = findPast13DaySum();
@@ -181,6 +194,141 @@ public class Tab2 extends Fragment implements View.OnClickListener
         avgContacts.setText(String.valueOf((past13DaySum+contactsTodayVar)/14));
         averageContactsPBar.setVisibility(View.INVISIBLE);
         return root;
+    }
+
+    private void findLocation()
+    {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                GetLocation getLocation = new GetLocation(getActivity(), fusedLocationProviderClient);
+                getLocation.findLocation();
+            }
+        }).start();
+    }
+
+    // receiver when new device is found. update contacts today
+    private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent)
+        {
+            String action = intent.getAction();
+            Log.i(TAG, "inside locationReceiver :"+action);
+            if(action==null)    return;
+
+            switch (action)
+            {
+                case "LOCATION_FOUND":
+                    String city = intent.getStringExtra("cityName");
+                    int z = intent.getIntExtra("zoneVar", 0);
+                    Log.i(TAG, "zoneVar, cityName :"+z+", "+city);
+                    if(z==2)
+                    {
+                        zoneColorVar = "(Red zone)";
+                        zoneVar = 2;
+                        zoneColorId = R.color.colorAccent;
+                    }
+                    else if(z==1)
+                    {
+                        zoneColorVar = "(Orange zone)";
+                        zoneVar = 1;
+                        zoneColorId = R.color.colorOrange;
+                    }
+                    else
+                    {
+                        zoneColorVar = "(Green zone)";
+                        zoneVar = 0;
+                        zoneColorId = R.color.colorPrimary;
+                    }
+                    zoneColor.setText(zoneColorVar);
+                    zoneColor.setTextColor(getResources().getColor(zoneColorId));
+                    locationStat.setText(city);
+                    locationStat.setTextColor(getResources().getColor(zoneColorId));
+                    zoneColorPBar.setVisibility(View.INVISIBLE);
+                    locationStatPBar.setVisibility(View.INVISIBLE);
+                    updateRiskIndex();
+                    break;
+
+                case "GPS_PERMISSION":
+                    Intent intent1 = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivityForResult(intent1, 42);
+                    break;
+
+                case "ENABLE_GPS":
+                    tryingForLocationCount++;
+                    if(tryingForLocationCount>=2)
+                    {
+                        locationStat.setText("Not found");
+                        locationStatPBar.setVisibility(View.INVISIBLE);
+                    }
+                    enableGPS();
+                    break;
+
+                case "GET_LOCATION_PERMISSION":
+                    requestPermSecCount++;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        requestPermissions(new String[]{
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                        }, 44);
+                    }
+                    break;
+            }
+        }
+    };
+
+    private void enableGPS()
+    {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        Task<LocationSettingsResponse> result =
+                LocationServices.getSettingsClient(Objects.requireNonNull(getActivity())).checkLocationSettings(builder.build());
+
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                } catch (ApiException exception) {
+                    switch (exception.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            // Location settings are not satisfied. But could be fixed by showing the
+                            // user a dialog.
+                            try {
+                                // Cast to a resolvable exception.
+                                ResolvableApiException resolvable = (ResolvableApiException) exception;
+                                // Show the dialog by calling startResolutionForResult(),
+                                // and check the result in onActivityResult().
+                                resolvable.startResolutionForResult(
+                                        getActivity(),
+                                        LocationRequest.PRIORITY_HIGH_ACCURACY);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Thread.sleep(10000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                        Log.i(TAG, "Starting thread to find location");
+                                        findLocation();
+                                    }
+                                }).start();
+
+                            } catch (IntentSender.SendIntentException e) {
+                                // Ignore the error.
+                            } catch (ClassCastException e) {
+                                // Ignore, should be an impossible error.
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            // Location settings are not satisfied. However, we have no way to fix the
+                            // settings so we won't show the dialog.
+                            break;
+                    }
+                }
+            }
+        });
     }
 
     private void setStatsValues()
@@ -293,7 +441,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
             ed.putInt("preContactsRiskMax", preContactsRiskMax);
             ed.apply();
         }
-        messageForRiskIndex.put("fromContactsRiskAverage", fromContactsRiskMax);
+        messageForRiskIndex.put("fromContactsRisk", fromContactsRiskMax);
 
         //2. contacts today
         int fromContactsToday=0;
@@ -387,202 +535,42 @@ public class Tab2 extends Fragment implements View.OnClickListener
         return s;
     }
 
-    private void getLocation()
-    {
-        Log.i("Location", "inside get location");
-        if (ActivityCompat.checkSelfPermission(Objects.requireNonNull(getActivity()), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            Log.i("Location", "permission is there");
-            fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
-                @Override
-                public void onComplete(@NonNull Task<Location> task) {
-                    Location location = task.getResult();
-                    Log.i("Location", "inside listener");
-                    if (location != null) {
-                        Log.i("Location", "location is not null");
-                        getAddress(location);
-                    } else {
-                        Log.i("Loc", "location is null");
-                        requestNewLocationData();
-                    }
-                }
-            });
-        } else {
-            Log.i("Location", "permission is not there");
-            requestPermSecCount++;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                }, 44);
-            }
-        }
-    }
-
-    private void requestNewLocationData()
-    {
-        if (!isLocationEnabled_Network() && !isLocationEnabled_GPS()) {   // if both are disabled
-            requestLocEnableCount++;
-            Toast.makeText(getActivity(), "Please turn on location", Toast.LENGTH_LONG).show();
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivityForResult(intent, 42);
-            Log.i(TAG, "getting permission");
-        } else {
-            LocationRequest mLocationRequest = new LocationRequest();
-            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            //mLocationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
-            mLocationRequest.setInterval(0);
-            mLocationRequest.setFastestInterval(0);
-            mLocationRequest.setNumUpdates(1);
-            Log.i("Loc", "looper");
-            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
-            fusedLocationProviderClient.requestLocationUpdates(
-                    mLocationRequest, mLocationCallback,
-                    Looper.myLooper()
-            );
-        }
-    }
-
-    private LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            Log.i("Loc", "onLocResult");
-            Location mLastLocation = locationResult.getLastLocation();
-            if (mLastLocation!=null)
-            {
-                getAddress(mLastLocation);
-            }
-            else
-            {
-                requestNewLocationData();
-            }
-        }
-    };
-
-    private void getAddress(Location location)
-    {
-        try {
-            Geocoder geocoder = new Geocoder(getActivity(),
-                    Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(
-                    location.getLatitude(), location.getLongitude(),
-                    1
-            );
-            locationVar = addresses.get(0).getLocality();
-            final String cityName = addresses.get(0).getLocality();
-
-            if(cityName==null)
-            {
-                if(!isLocationEnabled_GPS())
-                {
-                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    startActivityForResult(intent, 42);
-                }
-                else
-                {
-                    locationStat.setText("couldn't find location");
-                    fusedLocationProviderClient.flushLocations();
-                    requestNewLocationData();
-                }
-                return;
-            }
-            locationStat.setText(locationVar);
-            locationStatPBar.setVisibility(View.INVISIBLE);
-            zoneColor.setVisibility(View.VISIBLE);
-            final String area = addresses.get(0).getAdminArea();
-
-            // check if any of this is in hotspot list
-            DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference().child("hotspots");
-            dataRef.child("lists").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot)
-                {
-                    if(dataSnapshot.exists())
-                    {
-                         String red = dataSnapshot.child("red").getValue(String.class);
-                         String orange = dataSnapshot.child("orange").getValue(String.class);
-                         if(red!=null && (red.contains(cityName) || red.contains(area)))
-                         {
-                             zoneColorVar = "(Red zone)";
-                             zoneVar = 2;
-                             zoneColorId = R.color.colorAccent;
-                             zoneColor.setText(zoneColorVar);
-                             zoneColor.setTextColor(getResources().getColor(zoneColorId));
-                             locationStat.setTextColor(getResources().getColor(zoneColorId));
-                             zoneColorPBar.setVisibility(View.INVISIBLE);
-                             updateRiskIndex();
-                         }
-                         else if(orange!=null && (orange.contains(cityName) || orange.contains(area)))
-                         {
-                             zoneColorVar = "(Orange zone)";
-                             zoneVar = 1;
-                             zoneColorId = R.color.colorOrange;
-                             zoneColor.setText(zoneColorVar);
-                             zoneColor.setTextColor(getResources().getColor(zoneColorId));
-                             locationStat.setTextColor(getResources().getColor(zoneColorId));
-                             zoneColorPBar.setVisibility(View.INVISIBLE);
-                             updateRiskIndex();
-                         }
-                         else
-                         {
-                             zoneColorVar = "(Green zone)";
-                             zoneVar = 0;
-                             zoneColorId = R.color.colorPrimary;
-                             zoneColor.setText(zoneColorVar);
-                             zoneColor.setTextColor(getResources().getColor(zoneColorId));
-                             locationStat.setTextColor(getResources().getColor(zoneColorId));
-                             zoneColorPBar.setVisibility(View.INVISIBLE);
-                             updateRiskIndex();
-                         }
-                    }
-                    else
-                    {
-                        Log.i("Database", "dataSnapshot not exists");
-                        zoneColorVar = "(Green zone)";
-                        zoneColorId = R.color.colorPrimary;
-                        zoneColor.setText(zoneColorVar);
-                        zoneColor.setTextColor(getResources().getColor(zoneColorId));
-                        locationStat.setTextColor(getResources().getColor(zoneColorId));
-                        zoneColorPBar.setVisibility(View.INVISIBLE);
-                        updateRiskIndex();
-                    }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) { }
-            });
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean isLocationEnabled_Network() {
-        LocationManager locationManager = (LocationManager) Objects.requireNonNull(getContext()).getSystemService(LOCATION_SERVICE);
-        return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-    private boolean isLocationEnabled_GPS() {
-        LocationManager locationManager = (LocationManager) Objects.requireNonNull(getContext()).getSystemService(LOCATION_SERVICE);
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode==42)
         {
-            Log.i("Location", "Got the permission maybe");
-            if(requestLocEnableCount<=2 || isLocationEnabled_GPS())
-                requestNewLocationData();
+            findLocation();
         }
         else if (requestCode==44)
         {
             if(grantResults[0] == PackageManager.PERMISSION_DENIED && requestPermSecCount<=2)
-                getLocation();
+                findLocation();
+            else
+                findLocation();
         }
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+        Log.i(TAG, "inside onActivityResult");
+        switch (requestCode) {
+            case LocationRequest.PRIORITY_HIGH_ACCURACY:
+                switch (resultCode)
+                {
+                    case Activity.RESULT_OK:
+                        Log.i(TAG, "onActivityResult: GPS Enabled by user");
+                        findLocation();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Log.i(TAG, "onActivityResult: User rejected GPS request");
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
     }
 
     @Override
@@ -590,6 +578,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
         super.onDestroy();
         try {
             Objects.requireNonNull(getActivity()).unregisterReceiver(receiver);
+            Objects.requireNonNull(getActivity()).unregisterReceiver(locationReceiver);
         }catch (Exception e)
         {
             e.printStackTrace();
