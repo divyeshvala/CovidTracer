@@ -229,14 +229,11 @@ public class Tab2 extends Fragment implements View.OnClickListener
                     contactsTodayVar = cursor.getCount();
                     todaysNum.setText(String.valueOf(contactsTodayVar));
                     avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
+                    Log.i(TAG, "AVERAGE :"+(past13DaySum + contactsTodayVar)+"  "+totalDays);
                     avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
                     Log.i(TAG, "Average contacts :" + String.format("%.2f", avgNumVar));
                     cursor.close();
 
-                    Utilities utilities = new Utilities();
-                    BluetoothOffTime = (int) utilities.getTotalBluetoothOffTime(Objects.requireNonNull(getActivity()));
-
-                    Log.i(TAG, "TotalBTOffTime :" + BluetoothOffTime);
                     updateRiskIndex();
                 }
             }
@@ -314,6 +311,9 @@ public class Tab2 extends Fragment implements View.OnClickListener
         messageForRiskIndex.put("fromContactsToday", fromContactsToday);
 
         //3. Numbers of hours user's bluetooth was off.
+        Utilities utilities = new Utilities();
+        BluetoothOffTime = (int) utilities.getTotalBluetoothOffTime(Objects.requireNonNull(getActivity()));
+        Log.i(TAG, "TotalBTOffTime :" + BluetoothOffTime);
         int fromBluetoothOffTime = 0;
         if(BluetoothOffTime<15)
             fromBluetoothOffTime += BluetoothOffTime;
@@ -387,8 +387,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
         return s;
     }
 
-    private void getLocation() {
-
+    private void getLocation()
+    {
         Log.i("Location", "inside get location");
         if (ActivityCompat.checkSelfPermission(Objects.requireNonNull(getActivity()), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Log.i("Location", "permission is there");
