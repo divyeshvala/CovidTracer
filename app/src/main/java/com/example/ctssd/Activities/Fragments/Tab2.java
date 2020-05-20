@@ -113,7 +113,6 @@ public class Tab2 extends Fragment implements View.OnClickListener
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
 
         SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-        totalDays = settings.getInt("totalDays", 1);  // since the app installation
         preContactsRiskMax = settings.getInt("preContactsRiskMax", 0);
 
         // Every 24 hours work
@@ -121,6 +120,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
         if(utilities.isTwentyFourHoursOver(getActivity()))
         {
             updateRiskIndex();
+            riskIndexPBar.setVisibility(View.INVISIBLE);
             utilities.TwentyFourHoursWork(getActivity());
         }
         else
@@ -133,8 +133,10 @@ public class Tab2 extends Fragment implements View.OnClickListener
             messageForRiskIndex.put("fromSelfAssessReport", settings.getInt("riskFromReport", 0));
         }
 
+        totalDays = settings.getInt("totalDays", 1);  // since the app installation
+
         // register receiver for broadcast when contact today is changed
-        IntentFilter intentFilter = new IntentFilter("ACTION_UPDATE_CONTACTS_AND_RISK");
+        IntentFilter intentFilter = new IntentFilter("ACTION_UPDATE_CONTACTS");
         getActivity().registerReceiver(receiver, intentFilter);
         IntentFilter intentFilter2 = new IntentFilter("ACTION_UPDATE_RISK");
         getActivity().registerReceiver(receiver, intentFilter2);
@@ -342,6 +344,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
         {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
         currentStatusPBar.setVisibility(View.INVISIBLE);
         riskIndexText.setText(riskIndexVar+"%");
+        riskIndexPBar.setVisibility(View.INVISIBLE);
     }
 
     // receiver when new device is found. update contacts today
@@ -350,7 +353,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
         {
             Log.i(TAG, "receiver : updating contacts today");
             String action = intent.getAction();
-            if(action!=null && action.equals("ACTION_UPDATE_CONTACTS_AND_RISK"))
+            if(action!=null && action.equals("ACTION_UPDATE_CONTACTS"))
             {
                 Cursor cursor = myDb.getAllData();
                 if(cursor!=null)
@@ -433,6 +436,9 @@ public class Tab2 extends Fragment implements View.OnClickListener
             else
                 fromContactsToday = 20;
         }
+        else
+            fromContactsToday = 0;
+
         messageForRiskIndex.put("fromContactsToday", fromContactsToday);
         mapEditor.putInt("fromContactsToday", fromContactsToday);
 
@@ -453,6 +459,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
         int fromCrowdInstances = CrowdNo*5;
         messageForRiskIndex.put("fromCrowdInstances", fromCrowdInstances);
         mapEditor.putInt("fromCrowdInstances", fromCrowdInstances);
+
+        mapEditor.apply();
 
         // 5. from Self assessment report.
         int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
@@ -566,7 +574,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 Utilities.showMessage(getActivity(), "Todays Contacts", list);
                 return;
             case R.id.id_averageContactsLayout:
-                Utilities.showMessage(getActivity(), "Average", "Average number of people you have contacted in last 14 days.");
+                String str = "\nTotal contacts :"+(past13DaySum+contactsTodayVar)+"\n"+"Total days :"+totalDays;
+                Utilities.showMessage(getActivity(), "Average", "Average number of people you have contacted in last 14 days."+str);
                 return;
             case R.id.id_currentStatusLayout:
                 Utilities.showMessage(getActivity(), "Current Status", "Meaning of keywords used...\n\npositive - You are Covid19 positive patient.\n\ndirect_contact - You have directly contacted covid19 positive person.\n\n" +
@@ -583,7 +592,16 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 return;
 
             case R.id.id_warningLayout:
-                Utilities.showMessage(getActivity(), "Location status", "It shows whether your current location is red zone or green zone.");
+//                Cursor cur = myDb.getAllDataTable3();
+//                String lst ="Sr. day-month-year    phone\n";
+//                if(cur!=null)
+//                {
+//                    while (cur.moveToNext())
+//                    {
+//                        lst += cur.getInt(0)+"  "+cur.getInt(1)+":"+cur.getInt(2)+":"+cur.getInt(3)+"   "+cur.getString(4)+"\n";
+//                    }
+//                }
+                Utilities.showMessage(getActivity(), "Location status", "It shows whether your current location is red zone or green zone.\n");
         }
     }
 

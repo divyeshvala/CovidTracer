@@ -112,7 +112,7 @@ public class Tab3 extends Fragment {
 
         displayGraph();
 
-        IntentFilter intentFilter = new IntentFilter("ACTION_update_contacts_today");
+        IntentFilter intentFilter = new IntentFilter("ACTION_UPDATE_CONTACTS");
         getActivity().registerReceiver(receiver, intentFilter);
 
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -208,7 +208,7 @@ public class Tab3 extends Fragment {
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent)
         {
-            Log.i("Tab2 Receiver", "updating graph");
+            Log.i("Tab3 Receiver", "updating graph");
 
             Cursor cursor = myDb.getAllData();
             if(cursor!=null && preTodayContacts!=cursor.getCount())

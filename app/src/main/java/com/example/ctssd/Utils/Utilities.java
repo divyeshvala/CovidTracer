@@ -22,7 +22,6 @@ public class Utilities
 
     public boolean isTwentyFourHoursOver(Context context)
     {
-        // TODO: comment it for testing.
         myDb = new DatabaseHelper(context);
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
         int lastDay = settings.getInt("day", 0);
@@ -44,6 +43,7 @@ public class Utilities
 
     public void TwentyFourHoursWork(Context context)
     {
+        Log.i(TAG, "Inside TwentyFourHoursWork");
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
         int lastDay = settings.getInt("day", 0);
         int lastMonth = settings.getInt("month", 0);
@@ -52,9 +52,11 @@ public class Utilities
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH);
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
+        Log.i(TAG, "LAST DATE : "+lastDay+", "+lastMonth+", "+lastYear);
+
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("day", currentDay);
-        editor.putInt("month", currentMonth);
+        editor.putInt("month", currentMonth+1);   // TODO: remove +1 if needed.
         editor.putInt("year", currentYear);
         editor.apply();
 
@@ -76,7 +78,7 @@ public class Utilities
         }
         Objects.requireNonNull(cursor).close();
         myDb.deleteAllRecords();  //delete all records from table1
-        Log.i(TAG, "Data stored in table3 : "+countTable1);
+        Log.i(TAG, "Data stored now in table3 : "+countTable1);
 
         myDb.insertDataTable2(countTable1);
         Cursor cursor1 = myDb.getAllDataTable2();
@@ -157,44 +159,6 @@ public class Utilities
             return (totalHours - totalBTOnTime);
         return 0;
     }
-
-//    private float getCurrentBTOnTime()
-//    {
-//        Calendar startTime =  Calendar.getInstance(); //BackgroundService.startTime;
-//        Calendar endTime = Calendar.getInstance();
-//
-//        if(startTime==null)
-//            return 0;
-//
-//        float currentBluetoothTime=0;
-//
-//        if(startTime.get(Calendar.HOUR_OF_DAY)<6)
-//        {
-//            currentBluetoothTime = 0;
-//            if(endTime.get(Calendar.HOUR_OF_DAY)-6 >= 0)
-//            {
-//                currentBluetoothTime += endTime.get(Calendar.HOUR_OF_DAY)-6;
-//                currentBluetoothTime += endTime.get(Calendar.MINUTE)/60.0 ;
-//            }
-//            Log.i(TAG, "CurrentBTTime1 :"+currentBluetoothTime);
-//        }
-//        else if(endTime.get(Calendar.HOUR_OF_DAY)==23)
-//        {
-//            currentBluetoothTime = 0;
-//            if( 11-startTime.get(Calendar.HOUR_OF_DAY) > 0)
-//            {
-//                currentBluetoothTime += 23-startTime.get(Calendar.HOUR_OF_DAY)-1;
-//                currentBluetoothTime += (60-startTime.get(Calendar.MINUTE))/60.0 ;
-//            }
-//            Log.i(TAG, "CurrentBTTime1 :"+currentBluetoothTime);
-//        }
-//        else
-//        {
-//            currentBluetoothTime = (float) ( endTime.getTime().getTime()-startTime.getTime().getTime())/3600000;
-//            Log.i(TAG, "CurrentBTTime3 :"+currentBluetoothTime);
-//        }
-//        return currentBluetoothTime;
-//    }
 
     private void inserLocalDataZeroes()
     {

@@ -35,9 +35,9 @@ public class BackgroundService extends Service
 {
     private static final String TAG = "BackgroundService";
     private static final String AppId = "c1t2";
-    private static final int CROWD_LIMIT = 2;  // TODO: change it to 7 later
+    private static final int CROWD_LIMIT = 3;  // TODO: change it to 7 later
     private static final int CROWD_TIME_LIMIT = 60000;
-    private static final int CROWD_INSTANCES_LIMIT = 1;  // TODO: change it to 3 later
+    private static final int CROWD_INSTANCES_LIMIT = 3;
     private static long preCrowdInstanceTime = -1;
 
     private DatabaseHelper myDb;
@@ -87,7 +87,7 @@ public class BackgroundService extends Service
                             Log.i(TAG, "TotalBTOnTime :"+totalBTOnTime);
                         }
                     }
-                }, 0, 15, TimeUnit.MINUTES);
+                }, 15, 15, TimeUnit.MINUTES);
 
         return START_REDELIVER_INTENT;
     }
@@ -148,7 +148,7 @@ public class BackgroundService extends Service
                     intent1.putExtra("riskIndex", riskIndex);
                     getApplication().sendBroadcast(intent1);
 
-                    Intent intent2 = new Intent("ACTION_UPDATE_CONTACTS_AND_RISK");
+                    Intent intent2 = new Intent("ACTION_UPDATE_CONTACTS");
                     getApplication().sendBroadcast(intent2);
                 }
             }
@@ -230,12 +230,12 @@ public class BackgroundService extends Service
 
     private int convertToInt(String riskIndex)
     {
-        if(riskIndex==null) return -1;  // TODO: change it to zero later
+        if(riskIndex==null) return 0;
         int n=0;
         for(int i=0; i<riskIndex.length(); i++)
         {
             if(riskIndex.charAt(i)>'9' || riskIndex.charAt(i)<'0')
-                return -1;   // TODO: change it to zero later
+                return 0;
             n = n*10 + (riskIndex.charAt(i)-'0');
         }
         return n;

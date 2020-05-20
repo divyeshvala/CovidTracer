@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -71,6 +72,16 @@ public class Tab1 extends Fragment {
 
         ProgressBar progressBar = root.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
+
+//        root.findViewById(R.id.id_temp).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
+//                SharedPreferences.Editor editor = settings.edit();
+//                editor.putInt("day", -1);
+//                editor.apply();
+//            }
+//        });
 
         RecyclerView recyclerView = root.findViewById(R.id.id_home_recyclerView);
         recyclerView.setNestedScrollingEnabled(false);
