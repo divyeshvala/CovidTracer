@@ -15,14 +15,9 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,13 +27,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.Activities.SelfAssessmentReport;
@@ -50,35 +40,21 @@ import com.example.ctssd.Utils.Utilities;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.io.IOException;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
-import static android.content.Context.LOCATION_SERVICE;
 
 public class Tab2 extends Fragment implements View.OnClickListener
 {
     private BluetoothAdapter bluetoothAdapter;
     private static final String AppId = "c1t2";
-    private static final int CROWD_INSTANCES_LIMIT = 1;  // TODO: change it later
     private static final String TAG = "TAB2";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -93,10 +69,9 @@ public class Tab2 extends Fragment implements View.OnClickListener
     private static int riskIndexVar = -1, zoneVar=0, BluetoothOffTime=0, zoneColorId=0;
     private static double avgNumVar = -1.0;
     private FusedLocationProviderClient fusedLocationProviderClient;
-    private int requestLocEnableCount = 0, requestPermSecCount=0;
+    private int requestPermSecCount=0;
     private static int contactsTodayVar = 0, past13DaySum=0, totalDays=1, preContactsRiskMax=0, preFromContactsToday=0, tryingForLocationCount=0;
     private static HashMap<String, Integer> messageForRiskIndex = new HashMap<>();
-    private static long preCrowdTime = -1;
 
     public Tab2() {}
 
@@ -132,24 +107,35 @@ public class Tab2 extends Fragment implements View.OnClickListener
         avgContactsInfo.setOnClickListener(this);
         locationAndZoneInfo.setOnClickListener(this);
 
-        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-        riskIndexVar = settings.getInt("myRiskIndex", 0);
-        totalDays = settings.getInt("totalDays", 1);  // since the app installation
-        preContactsRiskMax = settings.getInt("preContactsRiskMax", 0);
-        preFromContactsToday = settings.getInt("preFromContactsToday", 0);
-
-        Log.i(TAG, "Initial - myRiskIndex, riskFromReport :"+riskIndexVar+"  "+settings.getInt("riskFromReport", 0));
-
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         myDb = new DatabaseHelper(getActivity());
-
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // for getting lastLocation.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
+
+        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
+        totalDays = settings.getInt("totalDays", 1);  // since the app installation
+        preContactsRiskMax = settings.getInt("preContactsRiskMax", 0);
+
+        // Every 24 hours work
+        Utilities utilities = new Utilities();
+        if(utilities.isTwentyFourHoursOver(getActivity()))
+        {
+            updateRiskIndex();
+            utilities.TwentyFourHoursWork(getActivity());
+        }
+        else
+        {
+            riskIndexVar = settings.getInt("myRiskIndex", 0);
+            messageForRiskIndex.put("fromContactsRiskMax", settings.getInt("fromContactsRiskMax", 0));
+            messageForRiskIndex.put("fromContactsToday", settings.getInt("fromContactsToday", 0));
+            messageForRiskIndex.put("fromBluetoothOffTime", settings.getInt("fromBluetoothOffTime", 0));
+            messageForRiskIndex.put("fromCrowdInstances", settings.getInt("fromCrowdInstances", 0));
+            messageForRiskIndex.put("fromSelfAssessReport", settings.getInt("riskFromReport", 0));
+        }
 
         // register receiver for broadcast when contact today is changed
         IntentFilter intentFilter = new IntentFilter("ACTION_UPDATE_CONTACTS_AND_RISK");
         getActivity().registerReceiver(receiver, intentFilter);
-
         IntentFilter intentFilter2 = new IntentFilter("ACTION_UPDATE_RISK");
         getActivity().registerReceiver(receiver, intentFilter2);
 
@@ -184,15 +170,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
         IntentFilter intentFilter4 = new IntentFilter("GPS_PERMISSION"); getActivity().registerReceiver(locationReceiver, intentFilter4);
         IntentFilter intentFilter5 = new IntentFilter("ENABLE_GPS"); getActivity().registerReceiver(locationReceiver, intentFilter5);
         IntentFilter intentFilter6 = new IntentFilter("GET_LOCATION_PERMISSION"); getActivity().registerReceiver(locationReceiver, intentFilter6);
-
         findLocation();
 
-        // get past 13 day sum of contacts.
-        past13DaySum = findPast13DaySum();
-
-        Log.i("Average contacts", String.valueOf((double)(past13DaySum+contactsTodayVar)/14));
-        avgContacts.setText(String.valueOf((past13DaySum+contactsTodayVar)/14));
-        averageContactsPBar.setVisibility(View.INVISIBLE);
         return root;
     }
 
@@ -245,7 +224,6 @@ public class Tab2 extends Fragment implements View.OnClickListener
                     locationStat.setTextColor(getResources().getColor(zoneColorId));
                     zoneColorPBar.setVisibility(View.INVISIBLE);
                     locationStatPBar.setVisibility(View.INVISIBLE);
-                    updateRiskIndex();
                     break;
 
                 case "GPS_PERMISSION":
@@ -333,10 +311,19 @@ public class Tab2 extends Fragment implements View.OnClickListener
 
     private void setStatsValues()
     {
-        if (avgNumVar != -1) {
-            avgContacts.setText(String.valueOf(avgNumVar));
-            averageContactsPBar.setVisibility(View.INVISIBLE);
+        Cursor cursor = myDb.getAllData();
+        if (cursor != null) {
+            contactsTodayVar = cursor.getCount();
+            todaysNum.setText(String.valueOf(contactsTodayVar));
+            cursor.close();
         }
+
+        // get past 13 day sum of contacts.
+        past13DaySum = findPast13DaySum();
+        avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
+        avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
+        averageContactsPBar.setVisibility(View.INVISIBLE);
+
         if (locationVar!=null && (!locationVar.equals("null"))) {
             locationStat.setText(locationVar);
             locationStatPBar.setVisibility(View.INVISIBLE);
@@ -346,12 +333,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
             zoneColor.setText(zoneColorVar);
             zoneColor.setTextColor(getResources().getColor(zoneColorId));
         }
-        Cursor cursor = myDb.getAllData();
-        if (cursor != null) {
-            contactsTodayVar = cursor.getCount();
-            todaysNum.setText(String.valueOf(contactsTodayVar));
-            cursor.close();
-        }
+
         if(riskIndexVar<=33)
         {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
         else if(riskIndexVar<=66)
@@ -360,7 +342,6 @@ public class Tab2 extends Fragment implements View.OnClickListener
         {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
         currentStatusPBar.setVisibility(View.INVISIBLE);
         riskIndexText.setText(riskIndexVar+"%");
-        updateRiskIndex();
     }
 
     // receiver when new device is found. update contacts today
@@ -381,26 +362,22 @@ public class Tab2 extends Fragment implements View.OnClickListener
                     avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
                     Log.i(TAG, "Average contacts :" + String.format("%.2f", avgNumVar));
                     cursor.close();
-
-                    updateRiskIndex();
                 }
             }
             else if(action!=null && action.equals("ACTION_UPDATE_RISK"))
             {
                 int riskFromReport = intent.getIntExtra("riskFromReport", 0);
-                Log.i(TAG, "riskFromReport from broadcast :"+riskFromReport);
                 SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
                 int preRiskFromReport = settings.getInt("riskFromReport", 0);
                 riskIndexVar = riskIndexVar + (riskFromReport-preRiskFromReport);
-                Log.i(TAG, "preRiskFromReport, riskIndexVar :"+preRiskFromReport+", "+riskIndexVar);
 
                 riskIndexText.setText(riskIndexVar+"%");
                 if(riskIndexVar<=33)
-                {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
+                {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";    }
                 else if(riskIndexVar<=66)
-                {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
+                {    currentStatus.setText("High risk");  currentStatusVar="High risk"; }
                 else
-                {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
+                {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";   }
 
                 // update name of device after updating riskIndex
                 bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
@@ -419,9 +396,9 @@ public class Tab2 extends Fragment implements View.OnClickListener
     private void updateRiskIndex()
     {
         SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-        riskIndexPBar.setVisibility(View.VISIBLE);
+        SharedPreferences.Editor mapEditor = settings.edit();
 
-        // 1. max risk factors of contacts
+        // 1. max risk factors of contacts (scaled on 20)
         int fromContactsRiskMax=0;
         Cursor cursor = myDb.getAllData();
         if(cursor!=null)
@@ -434,29 +411,30 @@ public class Tab2 extends Fragment implements View.OnClickListener
         }
         if(fromContactsRiskMax>preContactsRiskMax)
         {
-            if(fromContactsRiskMax>20)
-                fromContactsRiskMax=20;
+            fromContactsRiskMax = (20*fromContactsRiskMax)/100;
             preContactsRiskMax = fromContactsRiskMax;
             SharedPreferences.Editor ed = settings.edit();
             ed.putInt("preContactsRiskMax", preContactsRiskMax);
             ed.apply();
         }
         messageForRiskIndex.put("fromContactsRisk", fromContactsRiskMax);
+        mapEditor.putInt("fromContactsRiskMax", fromContactsRiskMax);
 
-        //2. contacts today
+        //2. contacts today (But really yesterday)
         int fromContactsToday=0;
-        if(contactsTodayVar>10)
+        if(cursor!=null)
         {
-            if((contactsTodayVar-10)/2 < 20)
-                fromContactsToday = (contactsTodayVar-10)/2;
+            fromContactsToday = cursor.getCount();
+        }
+        if(fromContactsToday>10)
+        {
+            if((fromContactsToday-10)/2 < 20)
+                fromContactsToday = (fromContactsToday-10)/2;
             else
                 fromContactsToday = 20;
         }
-        SharedPreferences.Editor edi = settings.edit();
-        edi.putInt("todaysFromContactsToday", fromContactsToday);
-        edi.apply();
-        fromContactsToday += preFromContactsToday;
         messageForRiskIndex.put("fromContactsToday", fromContactsToday);
+        mapEditor.putInt("fromContactsToday", fromContactsToday);
 
         //3. Numbers of hours user's bluetooth was off.
         Utilities utilities = new Utilities();
@@ -468,32 +446,20 @@ public class Tab2 extends Fragment implements View.OnClickListener
         else
             fromBluetoothOffTime += 15;
         messageForRiskIndex.put("fromBluetoothOffTime", fromBluetoothOffTime);
+        mapEditor.putInt("fromBluetoothOffTime", fromBluetoothOffTime);
 
-        // 4. From location
-        int fromLocation = zoneVar*15;
-        messageForRiskIndex.put("fromLocation", fromLocation);
-
-        //5. Number of times user was standing in crowd.
-        int crowdInstances = settings.getInt("crowdInstances", 0);
-        int preCrowdNo = settings.getInt("crowdNo", 0);
-        int fromCrowdInstances = preCrowdNo*5;
-        if( crowdInstances >= CROWD_INSTANCES_LIMIT && ( preCrowdTime==-1 || Calendar.getInstance().getTime().getTime()-preCrowdTime>600000))
-        {
-            fromCrowdInstances += 5;
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putInt("crowdInstances", 0);
-            editor.putInt("crowdNo", (preCrowdNo+1));
-            editor.apply();
-            preCrowdTime = Calendar.getInstance().getTime().getTime();
-        }
+        //4. Number of times user was standing in crowd.
+        int CrowdNo = settings.getInt("crowdNo", 0);
+        int fromCrowdInstances = CrowdNo*5;
         messageForRiskIndex.put("fromCrowdInstances", fromCrowdInstances);
+        mapEditor.putInt("fromCrowdInstances", fromCrowdInstances);
 
-        // 6. from Self assessment report.
+        // 5. from Self assessment report.
         int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
         Log.i(TAG, "riskFromReport :"+fromSelfAssessReport);
         messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
 
-        int tempRiskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances+fromLocation+fromSelfAssessReport;
+        int tempRiskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances+fromSelfAssessReport;
         if(riskIndexVar!=tempRiskIndex)
         {
             riskIndexVar = tempRiskIndex;
@@ -501,7 +467,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 riskIndexVar=100;
             riskIndexText.setText(riskIndexVar + "%");
             riskIndexPBar.setVisibility(View.INVISIBLE);
-            // TODO: change it later
+
             if(riskIndexVar<=33)
             {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
             else if(riskIndexVar<=66)
@@ -517,7 +483,6 @@ public class Tab2 extends Fragment implements View.OnClickListener
             editor.putInt("myRiskIndex", riskIndexVar);
             editor.apply();
         }
-        riskIndexPBar.setVisibility(View.INVISIBLE);
     }
 
     private int findPast13DaySum() {
@@ -530,7 +495,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
             s += cursor.getInt(1);
             i++;
         }
-        Log.i("Tab2", "Total records in table2 - "+ i);
+        Log.i(TAG, "Total records in table2 - "+ i);
         cursor.close();
         return s;
     }

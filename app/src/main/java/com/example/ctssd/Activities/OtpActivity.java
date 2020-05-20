@@ -97,7 +97,6 @@ public class OtpActivity extends AppCompatActivity {
                             editor.putInt("startingHour", c1.get(Calendar.HOUR_OF_DAY));
                             editor.putInt("startingMinute", c1.get(Calendar.MINUTE));
                             editor.apply();
-
                             sendUserToHome();
                             // ...
                         } else {
@@ -111,29 +110,6 @@ public class OtpActivity extends AppCompatActivity {
                         mVerifyBtn.setEnabled(true);
                     }
                 });
-    }
-
-    private void setDetailsAndStatus(final String phone)
-    {
-        final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference().child("Users");
-        dbRef.child(phone).child("status").addValueEventListener(
-                new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot)
-                    {
-                        if(!dataSnapshot.exists())
-                        {
-                            dbRef.child(phone).child("status").setValue("safe");
-                        }
-                        else
-                        {
-                            Log.i("Register", "dataSnapshot exists");
-                        }
-                    }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) { }
-                }
-        );
     }
 
     @Override

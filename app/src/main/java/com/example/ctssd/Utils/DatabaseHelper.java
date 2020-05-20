@@ -13,6 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     private static final String DATABASE = "Database.db";
     private static final String TABLE1 = "table1";
     private static final String TABLE2 = "table2";
+    private static final String TABLE3 = "table3";
 
     public DatabaseHelper(Context context)
     {
@@ -24,8 +25,11 @@ public class DatabaseHelper extends SQLiteOpenHelper
     {
         String table1 = "CREATE TABLE "+ TABLE1 + "(PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER)";
         String table2 = "CREATE TABLE "+ TABLE2 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, count INTEGER)";
+        String table3 = "CREATE TABLE "+ TABLE3 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, DAY INTEGER, MONTH INTEGER, YEAR INTEGER, PHONE TEXT)";
+
         db.execSQL(table1);
         db.execSQL(table2);
+        db.execSQL(table3);
 //        db.execSQL("CREATE TABLE table1 (PHONE TEXT PRIMARY KEY, TIME TEXT)");
     }
 
@@ -35,6 +39,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
         //db.execSQL("DROP TABLE IF EXISTS table1");
         db.execSQL("DROP TABLE IF EXISTS "+TABLE1);
         db.execSQL("DROP TABLE IF EXISTS "+TABLE2);
+        db.execSQL("DROP TABLE IF EXISTS "+TABLE3);
         onCreate(db);
     }
 
@@ -48,9 +53,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
         contentValues.put("RISK", riskIndex);
         long res = db.insertWithOnConflict("table1", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
 
-        if(res == -1)
-            return false;
-        return true;
+        return res != -1;
     }
 
     public boolean insertDataTable2(int count)
@@ -61,9 +64,21 @@ public class DatabaseHelper extends SQLiteOpenHelper
         contentValues.put("count", count);
         long res = db.insertWithOnConflict("table2", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
 
-        if(res == -1)
-            return false;
-        return true;
+        return res != -1;
+    }
+
+    public boolean insertDataTable3(int day, int month, int year, String phone)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("DAY", day);
+        contentValues.put("MONTH", month);
+        contentValues.put("YEAR", year);
+        contentValues.put("PHONE", phone);
+        long res = db.insert("table3", null, contentValues);
+
+        return res != -1;
     }
 
     public void deleteAllRecords()
@@ -79,6 +94,14 @@ public class DatabaseHelper extends SQLiteOpenHelper
         db.execSQL("delete from table2 where id in (select id from table2 order by id LIMIT "+i+");");
     }
 
+    public void delete15DaysOldRecordsTable3(int day, int month, int year)
+    {
+        // delete 15 days old data
+        SQLiteDatabase db = this.getWritableDatabase();
+        // TODO: check if this is correct.
+        db.execSQL("delete from table3 where DAY="+day+" and MONTH="+month+" and YEAR="+year +";");
+    }
+
     public Cursor getAllData()
     {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -91,6 +114,14 @@ public class DatabaseHelper extends SQLiteOpenHelper
         SQLiteDatabase db = this.getWritableDatabase();
 
         return db.rawQuery("select * from table2", null);
+
+    }
+
+    public Cursor getAllDataTable3()
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        return db.rawQuery("select * from table3", null);
 
     }
 

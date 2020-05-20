@@ -4,7 +4,6 @@
  */
 
 package com.example.ctssd.Services;
-
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -25,6 +24,9 @@ import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
@@ -35,11 +37,12 @@ public class BackgroundService extends Service
     private static final String AppId = "c1t2";
     private static final int CROWD_LIMIT = 2;  // TODO: change it to 7 later
     private static final int CROWD_TIME_LIMIT = 60000;
+    private static final int CROWD_INSTANCES_LIMIT = 1;  // TODO: change it to 3 later
+    private static long preCrowdInstanceTime = -1;
 
     private DatabaseHelper myDb;
     private BluetoothAdapter bluetoothAdapter;
 
-    public static Calendar startTime;
     private Queue<UserQueueObject> contacts;
     private Set<String> contactsSet;
     private int counter;
@@ -49,7 +52,6 @@ public class BackgroundService extends Service
         myDb = new DatabaseHelper(getApplicationContext());
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        startTime = Calendar.getInstance();
         contacts = new LinkedList<>();
         contactsSet = new HashSet<>();
 
@@ -62,8 +64,30 @@ public class BackgroundService extends Service
         // Register for broadcasts when discovery is finished so that we can start it again.
         IntentFilter filter2 = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         registerReceiver(receiver, filter2);
-
         bluetoothAdapter.startDiscovery();
+
+        ScheduledExecutorService scheduler =
+                Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate
+                (new Runnable() {
+                    public void run() {
+                        Log.i(TAG, "Sheduler has been called");
+
+                        if(bluetoothAdapter.getState()==BluetoothAdapter.STATE_ON)
+                        {
+                            Log.i(TAG, "BT is on");
+                            SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                            float totalBTOnTime = settings.getFloat("totalBTOnTime", 0);
+                            totalBTOnTime += 0.25;
+
+                            SharedPreferences.Editor edit = settings.edit();
+                            edit.putFloat("totalBTOnTime", totalBTOnTime);
+                            edit.apply();
+
+                            Log.i(TAG, "TotalBTOnTime :"+totalBTOnTime);
+                        }
+                    }
+                }, 0, 15, TimeUnit.MINUTES);
 
         return START_REDELIVER_INTENT;
     }
@@ -73,21 +97,6 @@ public class BackgroundService extends Service
     public IBinder onBind(Intent intent)
     {
         return null;
-    }
-
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        try {
-            // don't forget to unregister receiver
-            unregisterReceiver(receiver);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
     }
 
     // Create a BroadcastReceiver for ACTION_FOUND.
@@ -160,6 +169,13 @@ public class BackgroundService extends Service
     private void checkIfUserInTheCrowd(String phone)
     {
         Calendar now = Calendar.getInstance();
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        preCrowdInstanceTime = settings.getLong("preCrowdInstanceTime", -1);
+        if(preCrowdInstanceTime!=-1 && (now.getTime().getTime()-preCrowdInstanceTime<60000))
+        {
+            return;
+        }
+
         Log.i(TAG, "CheckIfInTheCrowd : now"+now.getTime());
         if(!contactsSet.contains(phone))
         {
@@ -176,12 +192,23 @@ public class BackgroundService extends Service
                         contacts.clear();
                         contactsSet.clear();
                         Log.i(TAG, "Crowd limit reached");
-                        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                         int crowdInstances = settings.getInt("crowdInstances", 0);
                         crowdInstances++;
-                        SharedPreferences.Editor editor = settings.edit();
-                        editor.putInt("crowdInstances", crowdInstances);
-                        editor.apply();
+
+                        if( crowdInstances >= CROWD_INSTANCES_LIMIT )
+                        {
+                            SharedPreferences.Editor edit = settings.edit();
+                            edit.putInt("crowdInstances", 0);
+                            edit.putInt("crowdNo", (settings.getInt("crowdNo", 0)+1));
+                            edit.apply();
+                        }
+                        else
+                        {
+                            SharedPreferences.Editor editor = settings.edit();
+                            editor.putInt("crowdInstances", crowdInstances);
+                            editor.apply();
+                        }
+                        preCrowdInstanceTime = now.getTime().getTime();
                     }
                 }
                 else
@@ -219,6 +246,19 @@ public class BackgroundService extends Service
         return name.contains(AppId);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        try {
+            // don't forget to unregister receiver
+            unregisterReceiver(receiver);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
 
 
 }

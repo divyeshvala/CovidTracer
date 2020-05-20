@@ -30,12 +30,6 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
         myPhoneNumber = settings.getString("myPhoneNumber", "NA");
 
-        // Upload data to cloud.
-        new Thread( new Runnable() { @Override public void run() {
-            Utilities utilities = new Utilities();
-            utilities.uploadDataToCloud(Main2Activity.this);
-            } } ).start();
-
         tabLayout = (TabLayout)findViewById(R.id.tabLayout);
         tabLayout.addTab(tabLayout.newTab());
         tabLayout.addTab(tabLayout.newTab());
