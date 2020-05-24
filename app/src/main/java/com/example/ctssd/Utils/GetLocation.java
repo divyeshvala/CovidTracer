@@ -8,18 +8,10 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
-import android.util.Pair;
-import android.view.View;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-
-import com.example.ctssd.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -132,6 +124,7 @@ public class GetLocation
             {
                 Intent intent = new Intent("ENABLE_GPS");
                 mContext.sendBroadcast(intent);
+                return;
             }
             final String area = addresses.get(0).getAdminArea();
 

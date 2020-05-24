@@ -1,14 +1,23 @@
 package com.example.ctssd.Activities;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
 import com.example.ctssd.R;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class CoronaInfoActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -44,7 +53,7 @@ public class CoronaInfoActivity extends AppCompatActivity implements View.OnClic
     {
         if(expanded==-1)
         {
-            for(int i : layouts.get(v.getId()) )
+            for(int i : Objects.requireNonNull(layouts.get(v.getId())))
             {
                 findViewById(i).setVisibility(View.VISIBLE);
             }
@@ -53,7 +62,7 @@ public class CoronaInfoActivity extends AppCompatActivity implements View.OnClic
         }
         if(v.getId()==expanded)
         {
-            for(int i : layouts.get(v.getId()) )
+            for(int i : Objects.requireNonNull(layouts.get(v.getId())))
             {
                 findViewById(i).setVisibility(View.GONE);
             }
@@ -61,11 +70,11 @@ public class CoronaInfoActivity extends AppCompatActivity implements View.OnClic
         }
         else
         {
-            for(int i : layouts.get(expanded) )
+            for(int i : Objects.requireNonNull(layouts.get(expanded)))
             {
                 findViewById(i).setVisibility(View.GONE);
             }
-            for(int i : layouts.get(v.getId()) )
+            for(int i : Objects.requireNonNull(layouts.get(v.getId())))
             {
                 findViewById(i).setVisibility(View.VISIBLE);
             }

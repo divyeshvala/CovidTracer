@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.util.Log;
-import com.example.ctssd.Services.BackgroundService;
 import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -34,14 +33,20 @@ public class Utilities
         if(lastDay==0 || (lastDay == currentDay && lastMonth==currentMonth && lastYear==currentYear))
         {
             Log.i(TAG, "lastday==currentday");
-            if(lastDay==0)
+            if(lastDay==0) {
                 inserLocalDataZeroes();
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putInt("day", currentDay);
+                editor.putInt("month", currentMonth);
+                editor.putInt("year", currentYear);
+                editor.apply();
+            }
             return false;
         }
         return true;
     }
 
-    public void TwentyFourHoursWork(Context context)
+    public void TwentyFourHoursWork(Context context, int preRiskIndex)
     {
         Log.i(TAG, "Inside TwentyFourHoursWork");
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
@@ -56,7 +61,7 @@ public class Utilities
 
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("day", currentDay);
-        editor.putInt("month", currentMonth+1);   // TODO: remove +1 if needed.
+        editor.putInt("month", currentMonth);
         editor.putInt("year", currentYear);
         editor.apply();
 
@@ -80,7 +85,7 @@ public class Utilities
         myDb.deleteAllRecords();  //delete all records from table1
         Log.i(TAG, "Data stored now in table3 : "+countTable1);
 
-        myDb.insertDataTable2(countTable1);
+        myDb.insertDataTable2(countTable1, preRiskIndex);
         Cursor cursor1 = myDb.getAllDataTable2();
         int countTable2 = 0;
         if(cursor1!=null)
@@ -162,18 +167,31 @@ public class Utilities
 
     private void inserLocalDataZeroes()
     {
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
-        myDb.insertDataTable2(0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(3, 4);
+        myDb.insertDataTable2(20, 3);
+        myDb.insertDataTable2(12, 5);
+        myDb.insertDataTable2(14, 8);
+        myDb.insertDataTable2(5, 4);
+        myDb.insertDataTable2(8, 9);
+        myDb.insertDataTable2(19, 7);
+        myDb.insertDataTable2(25, 14);
+        myDb.insertDataTable2(7, 15);
+        myDb.insertDataTable2(1, 20);
+        myDb.insertDataTable2(8, 24);
+        myDb.insertDataTable2(2, 21);
+        myDb.insertDataTable2(16, 13);
     }
 }

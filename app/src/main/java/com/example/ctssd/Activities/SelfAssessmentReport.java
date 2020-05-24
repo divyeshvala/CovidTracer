@@ -1,8 +1,13 @@
 package com.example.ctssd.Activities;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +17,9 @@ import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import com.example.ctssd.R;
+import com.example.ctssd.Utils.Utilities;
+
+import java.util.Objects;
 
 public class SelfAssessmentReport extends AppCompatActivity implements View.OnClickListener {
 
@@ -52,6 +60,15 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
         hypertension.setOnClickListener(this);
         interacted.setOnClickListener(this);
         healthcareWorker.setOnClickListener(this);
+
+        //loadPreviousValues();
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        boolean isAlreadySubmitted = settings.getBoolean("isAlreadySubmitted", false);
+        if(isAlreadySubmitted)
+        {
+            String lastSumbit = settings.getString("lastSumbit", "25 May");
+            Utilities.showMessage(this, "Reminder", "You have already sumbitted the form on "+lastSumbit);
+        }
 
         profession.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -198,5 +215,63 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 SelfAssessmentReport.this.onBackPressed();
         }
         Log.i("SelfAssess", "RiskFromReport :"+riskFromReport);
+    }
+
+    private void loadPreviousValues()
+    {
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+
+        int preProfession = settings.getInt("preProfession", -1);
+        int preAge = settings.getInt("preAge", -1);
+        int preTravel = settings.getInt("preTravel", -1);
+
+        if(preProfession!=-1)
+        {
+            if(preProfession<6)
+                isRiskyProfession = true;
+            switch (preProfession) {
+                case 1:
+                    findViewById(R.id.id_selfAssess_profession_doctor).setEnabled(true);
+                    break;
+                case 2:
+                    findViewById(R.id.id_selfAssess_profession_delivery).setEnabled(true);
+                    break;
+                case 3:
+                    findViewById(R.id.id_selfAssess_profession_wholeseller).setEnabled(true);
+                    break;
+                case 4:
+                    findViewById(R.id.id_selfAssess_profession_chemist).setEnabled(true);
+                    break;
+                case 5:
+                    findViewById(R.id.id_selfAssess_profession_police).setEnabled(true);
+                    break;
+                case 6:
+                    findViewById(R.id.id_selfAssess_profession_other).setEnabled(true);
+                    break;
+            }
+        }
+
+        if(preTravel!=-1)
+        {
+            if(preTravel==1)
+                isTravel = true;
+            switch (preTravel)
+            {
+                case 1: findViewById(R.id.id_selfAssess_countries_yes).setEnabled(true); break;
+                case 2: findViewById(R.id.id_selfAssess_countries_no).setEnabled(true); break;
+            }
+        }
+
+        if(preAge!=-1)
+        {
+            if(preAge!=2)
+                isAge = true;
+            switch (preAge)
+            {
+                case 1: findViewById(R.id.id_selfAssess_age_below10).setEnabled(true); break;
+                case 2: findViewById(R.id.id_selfAssess_age_inBetween).setEnabled(true); break;
+                case 3: findViewById(R.id.id_selfAssess_age_above60).setEnabled(true); break;
+            }
+        }
     }
 }

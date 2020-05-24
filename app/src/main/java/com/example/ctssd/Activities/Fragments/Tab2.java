@@ -32,6 +32,7 @@ import androidx.fragment.app.Fragment;
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.Activities.SelfAssessmentReport;
+import com.example.ctssd.Activities.TempActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.Services.BackgroundService;
 import com.example.ctssd.Utils.DatabaseHelper;
@@ -47,6 +48,8 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
@@ -119,9 +122,10 @@ public class Tab2 extends Fragment implements View.OnClickListener
         Utilities utilities = new Utilities();
         if(utilities.isTwentyFourHoursOver(getActivity()))
         {
+            int preRiskIndex = settings.getInt("myRiskIndex", 0);
             updateRiskIndex();
             riskIndexPBar.setVisibility(View.INVISIBLE);
-            utilities.TwentyFourHoursWork(getActivity());
+            utilities.TwentyFourHoursWork(getActivity(), preRiskIndex);
         }
         else
         {
@@ -152,6 +156,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
         selfAssessBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // TODO: Change dest. later
                 startActivity(new Intent(getActivity(), SelfAssessmentReport.class));
             }
         });
@@ -370,6 +375,9 @@ public class Tab2 extends Fragment implements View.OnClickListener
             else if(action!=null && action.equals("ACTION_UPDATE_RISK"))
             {
                 int riskFromReport = intent.getIntExtra("riskFromReport", 0);
+                // scale it on 20.
+                riskFromReport = (20*riskFromReport)/27;
+
                 SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
                 int preRiskFromReport = settings.getInt("riskFromReport", 0);
                 riskIndexVar = riskIndexVar + (riskFromReport-preRiskFromReport);
@@ -389,6 +397,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 SharedPreferences.Editor editor = settings.edit();
                 editor.putInt("myRiskIndex", riskIndexVar);
                 editor.putInt("riskFromReport", riskFromReport);
+                editor.putBoolean("isAlreadySubmitted", true);
+                editor.putString("lastSumbit", Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+"-"+Calendar.getInstance().get(Calendar.MONTH)+"-"+Calendar.getInstance().get(Calendar.YEAR));
                 editor.apply();
 
                 messageForRiskIndex.put("fromSelfAssessReport", riskFromReport);
@@ -649,5 +659,4 @@ public class Tab2 extends Fragment implements View.OnClickListener
             mListener.onFragmentInteraction(uri);
         }
     }
-
 }

@@ -36,27 +36,49 @@
     </RadioGroup>
 
     <com.github.mikephil.charting.charts.BarChart
-        android:id="@+id/barchart1"
+        android:id="@+id/barChart"
         android:layout_below="@+id/id_radioGroup"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="10dp"
         android:layout_marginLeft="7dp"
         android:layout_marginRight="7dp"
         android:visibility="visible"
+        android:layout_above="@+id/id_switchGraph"
         />
 
-    <com.github.mikephil.charting.charts.BarChart
-        android:id="@+id/barchart2"
-        android:layout_below="@+id/id_radioGroup"
+    <LinearLayout
+        android:id="@+id/id_switchGraph"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:layout_marginLeft="7dp"
-        android:layout_marginRight="7dp"
-        android:visibility="invisible"
-        />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        style="?android:attr/buttonBarStyle"
+        >
+        <Button
+            android:id="@+id/id_contactsGraphBTN"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Contacts"
+            android:textAllCaps="false"
+            android:background="@drawable/graph_button_bg"
+            android:layout_margin="5dp"
+            android:textColor="#ffffff"
+            />
+        <Button
+            android:id="@+id/id_riskGraphBTN"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Risk factor"
+            android:textAllCaps="false"
+            android:background="@drawable/graph_button_bg"
+            android:layout_margin="5dp"
+            android:textColor="#ffffff"
+            />
+
+    </LinearLayout>
 
 </RelativeLayout>

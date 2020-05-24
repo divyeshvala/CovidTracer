@@ -1,5 +1,6 @@
 package com.example.ctssd.Activities.Fragments;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,17 +15,14 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.Adapter;
 import com.example.ctssd.Utils.DeviceDetailsObject;
 import com.example.ctssd.Utils.UserObject;
-import com.example.ctssd.Utils.Utilities;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -73,15 +71,15 @@ public class Tab1 extends Fragment {
         ProgressBar progressBar = root.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
 
-//        root.findViewById(R.id.id_temp).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-//                SharedPreferences.Editor editor = settings.edit();
-//                editor.putInt("day", -1);
-//                editor.apply();
-//            }
-//        });
+        root.findViewById(R.id.id_temp).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putInt("day", -1);
+                editor.apply();
+            }
+        });
 
         RecyclerView recyclerView = root.findViewById(R.id.id_home_recyclerView);
         recyclerView.setNestedScrollingEnabled(false);
@@ -112,7 +110,6 @@ public class Tab1 extends Fragment {
                 String phone = intent.getStringExtra("phone");
                 String distance = intent.getStringExtra("distance");
                 int riskIndex = intent.getIntExtra("riskIndex", 0);
-                boolean exists = false;
 
                 for(UserObject object : list)
                 {
@@ -180,13 +177,10 @@ public class Tab1 extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         try {
-            //getActivity().unregisterReceiver(receiver);
             Objects.requireNonNull(getActivity()).unregisterReceiver(updateListReceiver);
         }catch (Exception e){
             e.printStackTrace();
         }
     }
-
 }
