@@ -15,12 +15,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.Utilities;
 
-import java.io.File;
 import java.util.Objects;
 
 public class SelfAssessmentReport extends AppCompatActivity implements View.OnClickListener {
@@ -31,7 +29,7 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
     private int riskFromReport;
     private boolean isRiskyProfession, isTravel, isAge;
     private ProgressBar progressBar;
-    private SharedPreferences settings;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,8 +52,6 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
         riskFromReport = 0;
         isRiskyProfession = false;
 
-        settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-
         cold.setOnClickListener(this);
         fever.setOnClickListener(this);
         soreThroat.setOnClickListener(this);
@@ -65,8 +61,8 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
         interacted.setOnClickListener(this);
         healthcareWorker.setOnClickListener(this);
 
-        loadPreviousValues();
-
+        //loadPreviousValues();
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
         boolean isAlreadySubmitted = settings.getBoolean("isAlreadySubmitted", false);
         if(isAlreadySubmitted)
         {
@@ -113,21 +109,16 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
     @Override
     public void onClick(View v)
     {
-
-        SharedPreferences.Editor editor = settings.edit();
-
         switch (v.getId())
         {
             case R.id.id_selfAssess_symptoms_cold:
                 if(cold.isChecked())
                 {
                     riskFromReport += 1;
-                    editor.putBoolean("cold", true);
                 }
                 else
                 {
                     riskFromReport -= 1;
-                    editor.putBoolean("cold", false);
                 }
                 break;
 
@@ -135,12 +126,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(fever.isChecked())
                 {
                     riskFromReport += 1;
-                    editor.putBoolean("fever",true);
                 }
                 else
                 {
                     riskFromReport -= 1;
-                    editor.putBoolean("fever",false);
                 }
                 break;
 
@@ -148,12 +137,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(soreThroat.isChecked())
                 {
                     riskFromReport += 1;
-                    editor.putBoolean("sorethroat",true);
                 }
                 else
                 {
                     riskFromReport -= 1;
-                    editor.putBoolean("sorethroat",false);
                 }
                 break;
 
@@ -161,12 +148,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(breathing.isChecked())
                 {
                     riskFromReport += 1;
-                    editor.putBoolean("breathing",true);
                 }
                 else
                 {
                     riskFromReport -= 1;
-                    editor.putBoolean("breathing",false);
                 }
                 break;
 
@@ -174,12 +159,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(diabetes.isChecked())
                 {
                     riskFromReport += 1;
-                    editor.putBoolean("diabetes",true);
                 }
                 else
                 {
                     riskFromReport -= 1;
-                    editor.putBoolean("diabetes",false);
                 }
                 break;
 
@@ -187,12 +170,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(hypertension.isChecked())
                 {
                     riskFromReport += 1;
-                    editor.putBoolean("hypertension",true);
                 }
                 else
                 {
                     riskFromReport -= 1;
-                    editor.putBoolean("hypertension",false);
                 }
                 break;
 
@@ -200,12 +181,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(interacted.isChecked())
                 {
                     riskFromReport += 5;
-                    editor.putBoolean("interacted",true);
                 }
                 else
                 {
                     riskFromReport -= 5;
-                    editor.putBoolean("interacted",false);
                 }
                 break;
 
@@ -213,12 +192,10 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 if(healthcareWorker.isChecked())
                 {
                     riskFromReport += 5;
-                    editor.putBoolean("healthcareworker",true);
                 }
                 else
                 {
                     riskFromReport -= 5;
-                    editor.putBoolean("healthcareworker",false);
                 }
                 break;
 
@@ -237,60 +214,64 @@ public class SelfAssessmentReport extends AppCompatActivity implements View.OnCl
                 progressBar.setVisibility(View.INVISIBLE);
                 SelfAssessmentReport.this.onBackPressed();
         }
-
-        editor.putInt("preProfession",profession.getCheckedRadioButtonId());
-        editor.putInt("preAge",age.getCheckedRadioButtonId());
-        editor.putInt("preTravel",travel.getCheckedRadioButtonId());
-        editor.apply();
-
         Log.i("SelfAssess", "RiskFromReport :"+riskFromReport);
     }
 
     private void loadPreviousValues()
     {
+        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+
         int preProfession = settings.getInt("preProfession", -1);
         int preAge = settings.getInt("preAge", -1);
         int preTravel = settings.getInt("preTravel", -1);
 
-        if(settings.getBoolean("cold",false))
-        {    cold.setChecked(true);  riskFromReport+=1; }
-        if(settings.getBoolean("fever",false))
-        {    fever.setChecked(true);  riskFromReport+=1; }
-        if(settings.getBoolean("sorethroat",false))
-        {    soreThroat.setChecked(true);  riskFromReport+=1; }
-        if(settings.getBoolean("breathing",false))
-        {    breathing.setChecked(true);  riskFromReport+=1; }
-        if(settings.getBoolean("diabetes",false))
-        {    diabetes.setChecked(true);  riskFromReport+=1; }
-        if(settings.getBoolean("hypertension",false))
-        {    hypertension.setChecked(true);  riskFromReport+=1; }
-        if(settings.getBoolean("interacted",false))
-        {    interacted.setChecked(true);  riskFromReport+=5; }
-        if(settings.getBoolean("healthcareworker",false))
-        {    healthcareWorker.setChecked(true);  riskFromReport+=5; }
-
         if(preProfession!=-1)
         {
-            if(preProfession!=R.id.id_selfAssess_profession_other)
+            if(preProfession<6)
                 isRiskyProfession = true;
-            RadioButton profans = findViewById(preProfession);
-            profans.setChecked(true);
+            switch (preProfession) {
+                case 1:
+                    findViewById(R.id.id_selfAssess_profession_doctor).setEnabled(true);
+                    break;
+                case 2:
+                    findViewById(R.id.id_selfAssess_profession_delivery).setEnabled(true);
+                    break;
+                case 3:
+                    findViewById(R.id.id_selfAssess_profession_wholeseller).setEnabled(true);
+                    break;
+                case 4:
+                    findViewById(R.id.id_selfAssess_profession_chemist).setEnabled(true);
+                    break;
+                case 5:
+                    findViewById(R.id.id_selfAssess_profession_police).setEnabled(true);
+                    break;
+                case 6:
+                    findViewById(R.id.id_selfAssess_profession_other).setEnabled(true);
+                    break;
+            }
         }
 
         if(preTravel!=-1)
         {
-            if(preTravel==R.id.id_selfAssess_countries_yes)
+            if(preTravel==1)
                 isTravel = true;
-            RadioButton travans = findViewById(preTravel);
-            travans.setChecked(true);
+            switch (preTravel)
+            {
+                case 1: findViewById(R.id.id_selfAssess_countries_yes).setEnabled(true); break;
+                case 2: findViewById(R.id.id_selfAssess_countries_no).setEnabled(true); break;
+            }
         }
 
         if(preAge!=-1)
         {
-            if(preAge!=R.id.id_selfAssess_age_inBetween)
+            if(preAge!=2)
                 isAge = true;
-            RadioButton agans = findViewById(preAge);
-            agans.setChecked(true);
+            switch (preAge)
+            {
+                case 1: findViewById(R.id.id_selfAssess_age_below10).setEnabled(true); break;
+                case 2: findViewById(R.id.id_selfAssess_age_inBetween).setEnabled(true); break;
+                case 3: findViewById(R.id.id_selfAssess_age_above60).setEnabled(true); break;
+            }
         }
     }
 }
