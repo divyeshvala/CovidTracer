@@ -29,10 +29,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.Activities.SelfAssessmentReport;
-import com.example.ctssd.Activities.TempActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.Services.BackgroundService;
 import com.example.ctssd.Utils.DatabaseHelper;
@@ -53,6 +54,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class Tab2 extends Fragment implements View.OnClickListener
 {
@@ -96,6 +99,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
         zoneColorPBar = root.findViewById(R.id.zoneColor_progress_bar);
         Button CoronaInfoBTN = root.findViewById(R.id.id_goTo_CoronaInfoActivity);
         Button selfAssessBTN = root.findViewById(R.id.id_selfAssessBTN);
+
+        final SwipeRefreshLayout swipeRefresh = root.findViewById(R.id.swipeRefresh);
 
         RelativeLayout statusInfo = root.findViewById(R.id.id_currentStatusLayout);
         RelativeLayout numbersInfo = root.findViewById(R.id.id_contactsTodayLayout);
@@ -156,8 +161,16 @@ public class Tab2 extends Fragment implements View.OnClickListener
         selfAssessBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: Change dest. later
                 startActivity(new Intent(getActivity(), SelfAssessmentReport.class));
+            }
+        });
+
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.i(TAG, "Refreshing...");
+                updateRiskIndex();
+                swipeRefresh.setRefreshing(false);
             }
         });
 
@@ -191,6 +204,195 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 getLocation.findLocation();
             }
         }).start();
+    }
+
+    // receiver when new device is found. update contacts today
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent)
+        {
+            Log.i(TAG, "receiver : updating contacts today");
+            String action = intent.getAction();
+            if(action!=null && action.equals("ACTION_UPDATE_CONTACTS"))
+            {
+                Cursor cursor = myDb.getAllData();
+                if(cursor!=null)
+                {
+                    contactsTodayVar = cursor.getCount();
+                    todaysNum.setText(String.valueOf(contactsTodayVar));
+                    avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
+                    Log.i(TAG, "AVERAGE :"+(past13DaySum + contactsTodayVar)+"  "+totalDays);
+                    avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
+                    Log.i(TAG, "Average contacts :" + String.format("%.2f", avgNumVar));
+                    cursor.close();
+                }
+            }
+            else if(action!=null && action.equals("ACTION_UPDATE_RISK"))
+            {
+                int riskFromReport = intent.getIntExtra("riskFromReport", 0);
+                // scale it on 20.
+                riskFromReport = (20*riskFromReport)/27;
+
+                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
+                int preRiskFromReport = settings.getInt("riskFromReport", 0);
+                riskIndexVar = riskIndexVar + (riskFromReport-preRiskFromReport);
+
+                riskIndexText.setText(riskIndexVar+"%");
+                if(riskIndexVar<=33)
+                {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";    }
+                else if(riskIndexVar<=66)
+                {    currentStatus.setText("High risk");  currentStatusVar="High risk"; }
+                else
+                {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";   }
+
+                // update name of device after updating riskIndex
+                bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
+                Log.i(TAG, "Your name changed :"+AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
+
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putInt("myRiskIndex", riskIndexVar);
+                editor.putInt("riskFromReport", riskFromReport);
+                editor.putBoolean("isAlreadySubmitted", true);
+                editor.putString("lastSumbit", Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+"-"+Calendar.getInstance().get(Calendar.MONTH)+"-"+Calendar.getInstance().get(Calendar.YEAR));
+                editor.apply();
+
+                messageForRiskIndex.put("fromSelfAssessReport", riskFromReport);
+            }
+        }
+    };
+
+    private void updateRiskIndex()
+    {
+        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        SharedPreferences.Editor mapEditor = settings.edit();
+
+        // 1. max risk factors of contacts (scaled on 20)
+        int fromContactsRiskMax=0;
+        Cursor cursor = myDb.getAllData();
+        if(cursor!=null)
+        {
+            while (cursor.moveToNext())
+            {
+                if(fromContactsRiskMax<cursor.getInt(2))
+                    fromContactsRiskMax = cursor.getInt(2);
+            }
+        }
+        if(fromContactsRiskMax>preContactsRiskMax)
+        {
+            fromContactsRiskMax = (20*fromContactsRiskMax)/100;
+            preContactsRiskMax = fromContactsRiskMax;
+            SharedPreferences.Editor ed = settings.edit();
+            ed.putInt("preContactsRiskMax", preContactsRiskMax);
+            ed.apply();
+        }
+        else
+        {
+            fromContactsRiskMax = preContactsRiskMax;
+        }
+        messageForRiskIndex.put("fromContactsRisk", fromContactsRiskMax);
+        mapEditor.putInt("fromContactsRiskMax", fromContactsRiskMax);
+
+        //2. contacts today (But really yesterday)
+        int fromContactsToday=0;
+        if(cursor!=null)
+        {
+            fromContactsToday = cursor.getCount();
+        }
+        if(fromContactsToday>10)
+        {
+            if((fromContactsToday-10)/2 < 20)
+                fromContactsToday = (fromContactsToday-10)/2;
+            else
+                fromContactsToday = 20;
+        }
+        else
+            fromContactsToday = 0;
+
+        messageForRiskIndex.put("fromContactsToday", fromContactsToday);
+        mapEditor.putInt("fromContactsToday", fromContactsToday);
+
+        //3. Numbers of hours user's bluetooth was off.
+        Utilities utilities = new Utilities();
+        BluetoothOffTime = (int) utilities.getTotalBluetoothOffTime(Objects.requireNonNull(getActivity()));
+        Log.i(TAG, "TotalBTOffTime :" + BluetoothOffTime);
+        int fromBluetoothOffTime = 0;
+        if(BluetoothOffTime<15)
+            fromBluetoothOffTime += BluetoothOffTime;
+        else
+            fromBluetoothOffTime += 15;
+        messageForRiskIndex.put("fromBluetoothOffTime", fromBluetoothOffTime);
+        mapEditor.putInt("fromBluetoothOffTime", fromBluetoothOffTime);
+
+        //4. Number of times user was standing in crowd.
+        int CrowdNo = settings.getInt("crowdNo", 0);
+        int fromCrowdInstances = CrowdNo*5;
+        messageForRiskIndex.put("fromCrowdInstances", fromCrowdInstances);
+        mapEditor.putInt("fromCrowdInstances", fromCrowdInstances);
+        mapEditor.apply();
+
+        // 5. from Self assessment report.
+        int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
+        messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
+
+        int tempRiskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances+fromSelfAssessReport;
+        if(riskIndexVar!=tempRiskIndex)
+        {
+            riskIndexVar = tempRiskIndex;
+            if(riskIndexVar>100)
+                riskIndexVar=100;
+            riskIndexText.setText(riskIndexVar + "%");
+            riskIndexPBar.setVisibility(View.INVISIBLE);
+
+            if(riskIndexVar<=33)
+            {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
+            else if(riskIndexVar<=66)
+            {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
+            else
+            {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
+
+            // update name of device after updating riskIndex
+            bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
+            Log.i(TAG, "Your name changed :"+AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
+
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putInt("myRiskIndex", riskIndexVar);
+            editor.apply();
+        }
+    }
+
+    private void setStatsValues()
+    {
+        Cursor cursor = myDb.getAllData();
+        if (cursor != null) {
+            contactsTodayVar = cursor.getCount();
+            todaysNum.setText(String.valueOf(contactsTodayVar));
+            cursor.close();
+        }
+
+        // get past 13 day sum of contacts.
+        past13DaySum = findPast13DaySum();
+        avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
+        avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
+        averageContactsPBar.setVisibility(View.INVISIBLE);
+
+        if (locationVar!=null && (!locationVar.equals("null"))) {
+            locationStat.setText(locationVar);
+            locationStatPBar.setVisibility(View.INVISIBLE);
+            locationStat.setTextColor(getResources().getColor(zoneColorId));
+        }
+        if (!zoneColorVar.equals("null")) {
+            zoneColor.setText(zoneColorVar);
+            zoneColor.setTextColor(getResources().getColor(zoneColorId));
+        }
+
+        if(riskIndexVar<=33)
+        {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
+        else if(riskIndexVar<=66)
+        {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
+        else
+        {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
+        currentStatusPBar.setVisibility(View.INVISIBLE);
+        riskIndexText.setText(riskIndexVar+"%");
+        riskIndexPBar.setVisibility(View.INVISIBLE);
     }
 
     // receiver when new device is found. update contacts today
@@ -231,6 +433,7 @@ public class Tab2 extends Fragment implements View.OnClickListener
                     locationStat.setTextColor(getResources().getColor(zoneColorId));
                     zoneColorPBar.setVisibility(View.INVISIBLE);
                     locationStatPBar.setVisibility(View.INVISIBLE);
+                    myDb.insertDataTable4(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+"-"+Calendar.getInstance().get(Calendar.MONTH)+"-"+Calendar.getInstance().get(Calendar.YEAR), Calendar.getInstance().get(Calendar.HOUR_OF_DAY)+":"+Calendar.getInstance().get(Calendar.MINUTE), city);
                     break;
 
                 case "GPS_PERMISSION":
@@ -314,193 +517,6 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 }
             }
         });
-    }
-
-    private void setStatsValues()
-    {
-        Cursor cursor = myDb.getAllData();
-        if (cursor != null) {
-            contactsTodayVar = cursor.getCount();
-            todaysNum.setText(String.valueOf(contactsTodayVar));
-            cursor.close();
-        }
-
-        // get past 13 day sum of contacts.
-        past13DaySum = findPast13DaySum();
-        avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
-        avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
-        averageContactsPBar.setVisibility(View.INVISIBLE);
-
-        if (locationVar!=null && (!locationVar.equals("null"))) {
-            locationStat.setText(locationVar);
-            locationStatPBar.setVisibility(View.INVISIBLE);
-            locationStat.setTextColor(getResources().getColor(zoneColorId));
-        }
-        if (!zoneColorVar.equals("null")) {
-            zoneColor.setText(zoneColorVar);
-            zoneColor.setTextColor(getResources().getColor(zoneColorId));
-        }
-
-        if(riskIndexVar<=33)
-        {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
-        else if(riskIndexVar<=66)
-        {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
-        else
-        {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
-        currentStatusPBar.setVisibility(View.INVISIBLE);
-        riskIndexText.setText(riskIndexVar+"%");
-        riskIndexPBar.setVisibility(View.INVISIBLE);
-    }
-
-    // receiver when new device is found. update contacts today
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent)
-        {
-            Log.i(TAG, "receiver : updating contacts today");
-            String action = intent.getAction();
-            if(action!=null && action.equals("ACTION_UPDATE_CONTACTS"))
-            {
-                Cursor cursor = myDb.getAllData();
-                if(cursor!=null)
-                {
-                    contactsTodayVar = cursor.getCount();
-                    todaysNum.setText(String.valueOf(contactsTodayVar));
-                    avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
-                    Log.i(TAG, "AVERAGE :"+(past13DaySum + contactsTodayVar)+"  "+totalDays);
-                    avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
-                    Log.i(TAG, "Average contacts :" + String.format("%.2f", avgNumVar));
-                    cursor.close();
-                }
-            }
-            else if(action!=null && action.equals("ACTION_UPDATE_RISK"))
-            {
-                int riskFromReport = intent.getIntExtra("riskFromReport", 0);
-                // scale it on 20.
-                riskFromReport = (20*riskFromReport)/27;
-
-                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-                int preRiskFromReport = settings.getInt("riskFromReport", 0);
-                riskIndexVar = riskIndexVar + (riskFromReport-preRiskFromReport);
-
-                riskIndexText.setText(riskIndexVar+"%");
-                if(riskIndexVar<=33)
-                {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";    }
-                else if(riskIndexVar<=66)
-                {    currentStatus.setText("High risk");  currentStatusVar="High risk"; }
-                else
-                {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";   }
-
-                // update name of device after updating riskIndex
-                bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-                Log.i(TAG, "Your name changed :"+AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-
-                SharedPreferences.Editor editor = settings.edit();
-                editor.putInt("myRiskIndex", riskIndexVar);
-                editor.putInt("riskFromReport", riskFromReport);
-                editor.putBoolean("isAlreadySubmitted", true);
-                editor.putString("lastSumbit", Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+"-"+Calendar.getInstance().get(Calendar.MONTH)+"-"+Calendar.getInstance().get(Calendar.YEAR));
-                editor.apply();
-
-                messageForRiskIndex.put("fromSelfAssessReport", riskFromReport);
-            }
-        }
-    };
-
-    private void updateRiskIndex()
-    {
-        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-        SharedPreferences.Editor mapEditor = settings.edit();
-
-        // 1. max risk factors of contacts (scaled on 20)
-        int fromContactsRiskMax=0;
-        Cursor cursor = myDb.getAllData();
-        if(cursor!=null)
-        {
-            while (cursor.moveToNext())
-            {
-                if(fromContactsRiskMax<cursor.getInt(2))
-                    fromContactsRiskMax = cursor.getInt(2);
-            }
-        }
-        if(fromContactsRiskMax>preContactsRiskMax)
-        {
-            fromContactsRiskMax = (20*fromContactsRiskMax)/100;
-            preContactsRiskMax = fromContactsRiskMax;
-            SharedPreferences.Editor ed = settings.edit();
-            ed.putInt("preContactsRiskMax", preContactsRiskMax);
-            ed.apply();
-        }
-        messageForRiskIndex.put("fromContactsRisk", fromContactsRiskMax);
-        mapEditor.putInt("fromContactsRiskMax", fromContactsRiskMax);
-
-        //2. contacts today (But really yesterday)
-        int fromContactsToday=0;
-        if(cursor!=null)
-        {
-            fromContactsToday = cursor.getCount();
-        }
-        if(fromContactsToday>10)
-        {
-            if((fromContactsToday-10)/2 < 20)
-                fromContactsToday = (fromContactsToday-10)/2;
-            else
-                fromContactsToday = 20;
-        }
-        else
-            fromContactsToday = 0;
-
-        messageForRiskIndex.put("fromContactsToday", fromContactsToday);
-        mapEditor.putInt("fromContactsToday", fromContactsToday);
-
-        //3. Numbers of hours user's bluetooth was off.
-        Utilities utilities = new Utilities();
-        BluetoothOffTime = (int) utilities.getTotalBluetoothOffTime(Objects.requireNonNull(getActivity()));
-        Log.i(TAG, "TotalBTOffTime :" + BluetoothOffTime);
-        int fromBluetoothOffTime = 0;
-        if(BluetoothOffTime<15)
-            fromBluetoothOffTime += BluetoothOffTime;
-        else
-            fromBluetoothOffTime += 15;
-        messageForRiskIndex.put("fromBluetoothOffTime", fromBluetoothOffTime);
-        mapEditor.putInt("fromBluetoothOffTime", fromBluetoothOffTime);
-
-        //4. Number of times user was standing in crowd.
-        int CrowdNo = settings.getInt("crowdNo", 0);
-        int fromCrowdInstances = CrowdNo*5;
-        messageForRiskIndex.put("fromCrowdInstances", fromCrowdInstances);
-        mapEditor.putInt("fromCrowdInstances", fromCrowdInstances);
-
-        mapEditor.apply();
-
-        // 5. from Self assessment report.
-        int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
-        Log.i(TAG, "riskFromReport :"+fromSelfAssessReport);
-        messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
-
-        int tempRiskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances+fromSelfAssessReport;
-        if(riskIndexVar!=tempRiskIndex)
-        {
-            riskIndexVar = tempRiskIndex;
-            if(riskIndexVar>100)
-                riskIndexVar=100;
-            riskIndexText.setText(riskIndexVar + "%");
-            riskIndexPBar.setVisibility(View.INVISIBLE);
-
-            if(riskIndexVar<=33)
-            {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
-            else if(riskIndexVar<=66)
-            {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
-            else
-            {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
-
-            // update name of device after updating riskIndex
-            bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-            Log.i(TAG, "Your name changed :"+AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putInt("myRiskIndex", riskIndexVar);
-            editor.apply();
-        }
     }
 
     private int findPast13DaySum() {

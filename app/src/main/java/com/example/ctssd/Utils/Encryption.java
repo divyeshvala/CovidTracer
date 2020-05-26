@@ -15,14 +15,16 @@ public class Encryption
 {
 
 
-    public String encrypt(byte[] plaintext, SecretKey secretKey, byte[] IV )
+    public String encrypt(byte[] plaintext, String secretKey)
     {
+        String strSecretKey = secretKey.trim();
+        byte[] encodedSecretKey = decoderfun(strSecretKey);
+        SecretKey originalSecretKey = new SecretKeySpec(encodedSecretKey, 0, encodedSecretKey.length, "AES");
         try
         {
             Cipher cipher = Cipher.getInstance("AES");
-            SecretKeySpec keySpec = new SecretKeySpec(secretKey.getEncoded(), "AES");
-            IvParameterSpec ivSpec = new IvParameterSpec(IV);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+            SecretKeySpec keySpec = new SecretKeySpec(originalSecretKey.getEncoded(), "AES");
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
             byte[] cipherText = cipher.doFinal(plaintext);
 
             return encoderfun(cipherText);
@@ -35,5 +37,9 @@ public class Encryption
 
     private static String encoderfun(byte[] decval) {
         return Base64.encodeToString(decval,Base64.DEFAULT);
+    }
+
+    private static byte[] decoderfun(String enval) {
+        return Base64.decode(enval,Base64.DEFAULT);
     }
 }

@@ -38,12 +38,12 @@
         android:layout_marginBottom="20dp"
         />
 
-    <Button
-        android:id="@+id/id_temp"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:layout_alignParentBottom="true"
-        android:text="Skip one day"
-        />
+<!--    <Button-->
+<!--        android:id="@+id/id_temp"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="40dp"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:text="Skip one day"-->
+<!--        />-->
 
 </RelativeLayout>

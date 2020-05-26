@@ -35,7 +35,7 @@ public class BackgroundService extends Service
 {
     private static final String TAG = "BackgroundService";
     private static final String AppId = "c1t2";
-    private static final int CROWD_LIMIT = 3;  // TODO: change it to 7 later
+    private static final int CROWD_LIMIT = 7;
     private static final int CROWD_TIME_LIMIT = 60000;
     private static final int CROWD_INSTANCES_LIMIT = 3;
     private static long preCrowdInstanceTime = -1;

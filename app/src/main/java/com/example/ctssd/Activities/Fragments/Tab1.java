@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
 
 public class Tab1 extends Fragment {
 
@@ -71,16 +72,15 @@ public class Tab1 extends Fragment {
         ProgressBar progressBar = root.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
 
-        root.findViewById(R.id.id_temp).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-                SharedPreferences.Editor editor = settings.edit();
-                editor.putInt("day", -1);
-                editor.apply();
-            }
-        });
-
+//        root.findViewById(R.id.id_temp).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
+//                SharedPreferences.Editor editor = settings.edit();
+//                editor.putInt("day", -1);
+//                editor.apply();
+//            }
+//        });
         RecyclerView recyclerView = root.findViewById(R.id.id_home_recyclerView);
         recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setHasFixedSize(false);
@@ -94,7 +94,7 @@ public class Tab1 extends Fragment {
         Objects.requireNonNull(getActivity()).registerReceiver(updateListReceiver, intentFilter);
 
         IntentFilter intentFilter2 = new IntentFilter("REMOVE_OUT_OF_RANGE_DEVICES");
-        Objects.requireNonNull(getActivity()).registerReceiver(updateListReceiver, intentFilter2);
+        Objects.requireNonNull(getActivity()).registerReceiver(removeOutOfRangeDevices, intentFilter2);
 
         return root;
     }
@@ -103,6 +103,7 @@ public class Tab1 extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
+
             String action = intent.getAction();
             if(action!=null && action.equals("ACTION_update_list"))
             {
@@ -120,32 +121,61 @@ public class Tab1 extends Fragment {
                     }
                 }
 
-                map.put(phone, new DeviceDetailsObject(Calendar.getInstance(), distance, riskIndex));
+                try {
+                    Log.i("Tab1", "Inserting in map ");
+                    map.put(phone, new DeviceDetailsObject(Calendar.getInstance(), distance, riskIndex));
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+                finally {
+                    Log.i("Tab1", "Inserted in map ");
+                }
+
                 list.add(new UserObject(phone, "Dist.-"+distance+"   RI-"+riskIndex));
                 adapter.notifyDataSetChanged();
+
             }
-            else if(action!=null && action.equals("REMOVE_OUT_OF_RANGE_DEVICES"))
+        }
+    };
+
+    private BroadcastReceiver removeOutOfRangeDevices = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            String action = intent.getAction();
+            if(action!=null && action.equals("REMOVE_OUT_OF_RANGE_DEVICES"))
             {
-                for(HashMap.Entry element : map.entrySet())
-                {
-                    String ph = (String) element.getKey();
-                    DeviceDetailsObject object = (DeviceDetailsObject) element.getValue();
-                    if(Calendar.getInstance().getTime().getTime()-object.getTime().getTime().getTime()>10000)
+                try{
+                    HashMap<String, DeviceDetailsObject> tempMap = map;
+                    Log.i("Tab1", "Removing from map ");
+                    for(HashMap.Entry element : tempMap.entrySet())
                     {
-                        map.remove(ph);
-                        for(UserObject obj : list)
+                        String ph = (String) element.getKey();
+                        DeviceDetailsObject object = (DeviceDetailsObject) element.getValue();
+                        if(Calendar.getInstance().getTime().getTime()-object.getTime().getTime().getTime()>10000)
                         {
-                            if(obj.getPhone().equals(ph)) {
-                                list.remove(obj);
-                                adapter.notifyDataSetChanged();
-                                break;
+                            for(UserObject obj : list)
+                            {
+                                if(obj.getPhone().equals(ph)) {
+                                    list.remove(obj);
+                                    adapter.notifyDataSetChanged();
+                                    break;
+                                }
                             }
                         }
                     }
                 }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+                finally {
+                    Log.i("Tab1", "Removed from map");
+                }
             }
         }
     };
+
 
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
@@ -178,6 +208,7 @@ public class Tab1 extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         try {
+            Objects.requireNonNull(getActivity()).unregisterReceiver(removeOutOfRangeDevices);
             Objects.requireNonNull(getActivity()).unregisterReceiver(updateListReceiver);
         }catch (Exception e){
             e.printStackTrace();

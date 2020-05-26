@@ -30,6 +30,9 @@ public class Utilities
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH);
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
+        Log.i("Utils", "Last date :"+lastDay+"-"+lastMonth+"-"+lastYear);
+        Log.i("Utils", "Current date :"+currentDay+"-"+currentMonth+"-"+currentYear);
+
         if(lastDay==0 || (lastDay == currentDay && lastMonth==currentMonth && lastYear==currentYear))
         {
             Log.i(TAG, "lastday==currentday");
@@ -167,31 +170,31 @@ public class Utilities
 
     private void inserLocalDataZeroes()
     {
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-//        myDb.insertDataTable2(0, 0);
-        myDb.insertDataTable2(3, 4);
-        myDb.insertDataTable2(20, 3);
-        myDb.insertDataTable2(12, 5);
-        myDb.insertDataTable2(14, 8);
-        myDb.insertDataTable2(5, 4);
-        myDb.insertDataTable2(8, 9);
-        myDb.insertDataTable2(19, 7);
-        myDb.insertDataTable2(25, 14);
-        myDb.insertDataTable2(7, 15);
-        myDb.insertDataTable2(1, 20);
-        myDb.insertDataTable2(8, 24);
-        myDb.insertDataTable2(2, 21);
-        myDb.insertDataTable2(16, 13);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+        myDb.insertDataTable2(0, 0);
+//        myDb.insertDataTable2(3, 4);
+//        myDb.insertDataTable2(20, 3);
+//        myDb.insertDataTable2(12, 5);
+//        myDb.insertDataTable2(14, 8);
+//        myDb.insertDataTable2(5, 4);
+//        myDb.insertDataTable2(8, 9);
+//        myDb.insertDataTable2(19, 7);
+//        myDb.insertDataTable2(25, 14);
+//        myDb.insertDataTable2(7, 15);
+//        myDb.insertDataTable2(1, 20);
+//        myDb.insertDataTable2(8, 24);
+//        myDb.insertDataTable2(2, 21);
+//        myDb.insertDataTable2(16, 13);
     }
 }

@@ -48,7 +48,7 @@ public class Tab3 extends Fragment {
 
     private TextView numbers;
     private BarChart barChart;
-    private RadioButton last7Days;
+    private RadioButton last7Days, sevenDaysAgo;
     private RadioGroup radioGroup ;
     private DatabaseHelper myDb;
     private List<BarEntry> barEntriesContactsLast7Days, barEntriesContacts7DaysAgo;
@@ -96,6 +96,7 @@ public class Tab3 extends Fragment {
         rootVar = root;
         barChart = root.findViewById(R.id.barChart);
         last7Days = root.findViewById(R.id.id_last7Days);
+        sevenDaysAgo = root.findViewById(R.id.id_7DaysAgo);
         radioGroup = root.findViewById(R.id.id_radioGroup);
         contactsGraphBTN = root.findViewById(R.id.id_contactsGraphBTN);
         riskFactorGraphBTN = root.findViewById(R.id.id_riskGraphBTN);
@@ -141,6 +142,7 @@ public class Tab3 extends Fragment {
                 if(!selectedBTN.equals("contacts"))
                 {
                     selectedBTN = "contacts";
+                    last7Days.setChecked(true);
                     showGraph(barChart, barEntriesContactsLast7Days, xAxisLabelsLast7Days, "Contacts");
                 }
             }
@@ -154,6 +156,7 @@ public class Tab3 extends Fragment {
                 if(!selectedBTN.equals("riskFactor"))
                 {
                     selectedBTN = "riskFactor";
+                    last7Days.setChecked(true);
                     showGraph(barChart, barEntriesRiskLast7Days, xAxisLabelsLast7Days, "Risk factor");
                 }
             }
@@ -261,7 +264,6 @@ public class Tab3 extends Fragment {
         mCursor.close();
     }
 
-    // TODO: Need to make changes in this.
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent)
         {
@@ -278,10 +280,6 @@ public class Tab3 extends Fragment {
                 {
                     Log.i("TAB3", "New contact added");
                     barChart.notifyDataSetChanged();
-//                    barChart.clear();
-//                    barChart = rootVar.findViewById(R.id.barChart);
-//                    barChart.clear();
-//                    showGraph(barChart, barEntriesContactsLast7Days, xAxisLabelsLast7Days, "Contacts");
                 }
             }
         }
