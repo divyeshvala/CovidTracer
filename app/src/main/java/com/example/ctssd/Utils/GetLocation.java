@@ -44,26 +44,26 @@ public class GetLocation
 
     public void findLocation()
     {
-        Log.i("Location", "inside get location");
+        Log.i("LocationFused", "inside get location");
         if (ActivityCompat.checkSelfPermission(Objects.requireNonNull(mContext), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            Log.i("Location", "permission is there");
+            Log.i("LocationFused", "permission is there");
             fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
                 @Override
                 public void onComplete(@NonNull Task<Location> task) {
                     Location location = task.getResult();
-                    Log.i("Location", "inside listener");
+                    Log.i("LocationFused", "inside listener");
                     if (location != null)
                     {
-                        Log.i("Location", "location is not null");
+                        Log.i("LocationFused", "location is not null");
                         getAddress(location);
                     } else {
-                        Log.i("Loc", "location is null");
+                        Log.i("LocationFused", "location is null");
                         requestNewLocationData();
                     }
                 }
             });
         } else {
-            Log.i("Location", "permission is not there");
+            Log.i("LocationFused", "permission is not there");
             Intent intent = new Intent("GET_LOCATION_PERMISSION");
             mContext.sendBroadcast(intent);
         }
@@ -80,10 +80,10 @@ public class GetLocation
             LocationRequest mLocationRequest = new LocationRequest();
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             //mLocationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
-            mLocationRequest.setInterval(0);
-            mLocationRequest.setFastestInterval(0);
-            mLocationRequest.setNumUpdates(1);
-            Log.i("Loc", "looper");
+            mLocationRequest.setInterval(15000);  //TODO
+            mLocationRequest.setFastestInterval(5000);
+            //mLocationRequest.setNumUpdates(1);  //TODO
+            Log.i("LocationLooper", "looper");
             fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(mContext));
             fusedLocationProviderClient.requestLocationUpdates(
                     mLocationRequest, mLocationCallback,
@@ -95,7 +95,7 @@ public class GetLocation
     private LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
-            Log.i("Loc", "onLocResult");
+            Log.i("LocationCallback", "onLocResult");
             Location mLastLocation = locationResult.getLastLocation();
             if (mLastLocation!=null)
             {
@@ -110,6 +110,13 @@ public class GetLocation
 
     private void getAddress(Location location)
     {
+        String coordinates = location.getLatitude() +"_"+ location.getLongitude();
+        Intent intent1 = new Intent("COORDINATES_FOUND");
+        intent1.putExtra("coordinates", coordinates);
+        intent1.putExtra("latitude",location.getLatitude());
+        intent1.putExtra("longitude", location.getLatitude());
+        mContext.sendBroadcast(intent1);
+
         try {
             Geocoder geocoder = new Geocoder(mContext,
                     Locale.getDefault());

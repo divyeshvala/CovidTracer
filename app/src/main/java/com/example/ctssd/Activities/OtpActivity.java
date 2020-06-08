@@ -39,6 +39,7 @@ public class OtpActivity extends AppCompatActivity {
     private Button mVerifyBtn;
     private ProgressBar mOtpProgress;
     private TextView mOtpFeedback;
+    private int counter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +90,7 @@ public class OtpActivity extends AppCompatActivity {
 
                             SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                             SharedPreferences.Editor editor = settings.edit();
-                            editor.putString("myPhoneNumber", getIntent().getStringExtra("myPhoneNumber"));
+                            //editor.putString("myPhoneNumber", getIntent().getStringExtra("myPhoneNumber"));
                             Calendar c1 = Calendar.getInstance();
                             editor.putInt("startingDay", c1.get(Calendar.DAY_OF_MONTH));
                             editor.putInt("startingMonth", c1.get(Calendar.MONTH));
@@ -97,7 +98,7 @@ public class OtpActivity extends AppCompatActivity {
                             editor.putInt("startingHour", c1.get(Calendar.HOUR_OF_DAY));
                             editor.putInt("startingMinute", c1.get(Calendar.MINUTE));
                             editor.apply();
-                            sendUserToHome();
+                            getUniqueIdOfUser(getIntent().getStringExtra("myPhoneNumber"));
                             // ...
                         } else {
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
@@ -118,6 +119,57 @@ public class OtpActivity extends AppCompatActivity {
         if(mCurrentUser != null){
             sendUserToHome();
         }
+    }
+
+    private void getUniqueIdOfUser(final String phone)
+    {
+        final DatabaseReference db = FirebaseDatabase.getInstance().getReference().child("counter");
+        db.addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                    {
+                        if(dataSnapshot.exists())
+                        {
+                            counter = dataSnapshot.getValue(Integer.class);
+                            final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference().child("Ids").child(phone);
+                            dbRef.addValueEventListener(
+                                    new ValueEventListener()
+                                    {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                                        {
+                                            if(!dataSnapshot.exists())
+                                            {
+                                                dbRef.setValue(counter+1);
+                                                SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                                                SharedPreferences.Editor edit = settings.edit();
+                                                edit.putString("myDeviceId", String.valueOf(counter+1));
+                                                edit.apply();
+                                                db.setValue(counter+1);
+                                                sendUserToHome();
+                                            }
+                                            else
+                                            {
+                                                SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                                                SharedPreferences.Editor edit = settings.edit();
+                                                edit.putString("myDeviceId", String.valueOf(dataSnapshot.getValue(Integer.class)));
+                                                edit.apply();
+                                                Log.i("Register", "dataSnapshot exists");
+                                                sendUserToHome();
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) { }
+                                    }
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) { }
+                }
+        );
     }
 
     private void sendUserToHome()

@@ -9,4 +9,8 @@
     <color name="disabledBtnBg">#999999</color>
 
     <color name="surfaceBackground">#DFE0E0</color>
+    <color name="colorBlue">#5E35B1</color>
+    <color name="colorSubCard">#EEE1F5</color>
+    <color name="colorStatsText">#ffffff</color>
+    <color name="colorStatsSubText">#F3C808</color>
 </resources>

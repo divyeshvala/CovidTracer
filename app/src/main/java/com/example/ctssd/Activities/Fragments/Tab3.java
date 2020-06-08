@@ -41,12 +41,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import static android.content.Context.MODE_PRIVATE;
+
 public class Tab3 extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    private TextView numbers;
+    private TextView yAxisTitle;
     private BarChart barChart;
     private RadioButton last7Days, sevenDaysAgo;
     private RadioGroup radioGroup ;
@@ -100,6 +102,7 @@ public class Tab3 extends Fragment {
         radioGroup = root.findViewById(R.id.id_radioGroup);
         contactsGraphBTN = root.findViewById(R.id.id_contactsGraphBTN);
         riskFactorGraphBTN = root.findViewById(R.id.id_riskGraphBTN);
+        yAxisTitle = root.findViewById(R.id.id_YAxisTitle);
 
         contactsGraphBTN.setEnabled(false);
         selectedBTN = "contacts";
@@ -128,11 +131,14 @@ public class Tab3 extends Fragment {
             barEntriesContactsLast7Days.add(new BarEntry(7, 0));
 
         Calendar calendar = Calendar.getInstance();
-        xAxisLabelsLast7Days[7] = calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get((Calendar.MONTH));
+        xAxisLabelsLast7Days[7] = calendar.get(Calendar.DAY_OF_MONTH)+"-"+(calendar.get((Calendar.MONTH))+1);
         showGraph(barChart, barEntriesContactsLast7Days, xAxisLabelsLast7Days, "Contacts");
         
         IntentFilter intentFilter = new IntentFilter("ACTION_UPDATE_CONTACTS");
         Objects.requireNonNull(getActivity()).registerReceiver(receiver, intentFilter);
+
+        IntentFilter intentFilter1 = new IntentFilter("ACTION_UPDATE_RISK_GRAPH");
+        Objects.requireNonNull(getActivity()).registerReceiver(receiver, intentFilter1);
 
         contactsGraphBTN.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,6 +147,7 @@ public class Tab3 extends Fragment {
                 riskFactorGraphBTN.setEnabled(true);
                 if(!selectedBTN.equals("contacts"))
                 {
+                    yAxisTitle.setText("C\nO\nN\nT\nA\nC\nT\nS");
                     selectedBTN = "contacts";
                     last7Days.setChecked(true);
                     showGraph(barChart, barEntriesContactsLast7Days, xAxisLabelsLast7Days, "Contacts");
@@ -155,6 +162,7 @@ public class Tab3 extends Fragment {
                 riskFactorGraphBTN.setEnabled(false);
                 if(!selectedBTN.equals("riskFactor"))
                 {
+                    yAxisTitle.setText("R\nI\nS\nK\n\nF\nA\nC\nT\nO\nR");
                     selectedBTN = "riskFactor";
                     last7Days.setChecked(true);
                     showGraph(barChart, barEntriesRiskLast7Days, xAxisLabelsLast7Days, "Risk factor");
@@ -168,6 +176,7 @@ public class Tab3 extends Fragment {
             {
                 if(selectedBTN.equals("contacts"))
                 {
+                    yAxisTitle.setText("C\nO\nN\nT\nA\nC\nT\nS");
                     if( checkedId == root.findViewById(R.id.id_last7Days).getId() )
                     {
                         showGraph(barChart, barEntriesContactsLast7Days, xAxisLabelsLast7Days, "Contacts");
@@ -179,6 +188,7 @@ public class Tab3 extends Fragment {
                 }
                 else
                 {
+                    yAxisTitle.setText("R\nI\nS\nK\n\nF\nA\nC\nT\nO\nR");
                     if( checkedId == root.findViewById(R.id.id_last7Days).getId() )
                     {
                         showGraph(barChart, barEntriesRiskLast7Days, xAxisLabelsLast7Days, "Risk factor");
@@ -239,7 +249,7 @@ public class Tab3 extends Fragment {
             cal.add(Calendar.DATE, j);
             Date dateBeforeNDays = cal.getTime();
             cal.setTime(dateBeforeNDays);
-            xAxisLabels7DaysAgo[i]= cal.get(Calendar.DAY_OF_MONTH)+"-"+cal.get(Calendar.MONTH);
+            xAxisLabels7DaysAgo[i]= cal.get(Calendar.DAY_OF_MONTH)+"-"+(cal.get((Calendar.MONTH))+1);
             i++;
             j++;
         }
@@ -257,7 +267,7 @@ public class Tab3 extends Fragment {
             cal.add(Calendar.DATE, j);
             Date dateBeforeNDays = cal.getTime();
             cal.setTime(dateBeforeNDays);
-            xAxisLabelsLast7Days[i]= cal.get(Calendar.DAY_OF_MONTH)+"-"+cal.get(Calendar.MONTH);
+            xAxisLabelsLast7Days[i]= cal.get(Calendar.DAY_OF_MONTH)+"-"+(cal.get((Calendar.MONTH))+1);
             i++;
             j++;
         }
@@ -268,17 +278,32 @@ public class Tab3 extends Fragment {
         public void onReceive(Context context, Intent intent)
         {
             Log.i("Tab3 Receiver", "updating graph");
-
-            Cursor cursor = myDb.getAllData();
-            if(cursor!=null && preTodayContacts!=cursor.getCount())
+            String action = intent.getAction();
+            if(action!=null && action.equals("ACTION_UPDATE_CONTACTS"))
             {
-                preTodayContacts = cursor.getCount();
-                cursor.close();
-                barEntriesContactsLast7Days.remove(7);
-                barEntriesContactsLast7Days.add(7, new BarEntry(7, preTodayContacts));
-                if(selectedBTN.equals("contacts") && last7Days.isChecked())
+                Cursor cursor = myDb.getAllData();
+                if(cursor!=null && preTodayContacts!=cursor.getCount())
                 {
-                    Log.i("TAB3", "New contact added");
+                    SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                    preTodayContacts = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
+                    cursor.close();
+                    barEntriesContactsLast7Days.remove(7);
+                    barEntriesContactsLast7Days.add(7, new BarEntry(7, preTodayContacts));
+                    if(selectedBTN.equals("contacts") && last7Days.isChecked())
+                    {
+                        Log.i("TAB3", "New contact added");
+                        barChart.notifyDataSetChanged();
+                    }
+                }
+            }
+            else if(action!=null && action.equals("ACTION_UPDATE_RISK_GRAPH"))
+            {
+                int risk = intent.getIntExtra("riskIndex", 0);
+                barEntriesRiskLast7Days.remove(7);
+                barEntriesRiskLast7Days.add(7, new BarEntry(7, risk));
+                if(selectedBTN.equals("riskFactor") && last7Days.isChecked())
+                {
+                    Log.i("TAB3", "Risk has been updated.");
                     barChart.notifyDataSetChanged();
                 }
             }
@@ -287,7 +312,7 @@ public class Tab3 extends Fragment {
 
     private void showGraph(BarChart barChart, List<BarEntry> barEntries, String[] values, String label)
     {
-        BarDataSet barDataSet = new BarDataSet(barEntries, label);
+        BarDataSet barDataSet = new BarDataSet(barEntries, "");
         barDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
         BarData barData = new BarData(barDataSet);
         barData.setBarWidth(0.9f);
@@ -300,15 +325,17 @@ public class Tab3 extends Fragment {
         barChart.setFitBars(true);
         barChart.setDrawGridBackground(true);
 
+
         XAxis xAxis = barChart.getXAxis();
         xAxis.setValueFormatter(new MyXAxisValueFormatter(values));
         xAxis.setPosition(XAxis.XAxisPosition.BOTH_SIDED);
         xAxis.setGranularity(1);
         //xAxis.setCenterAxisLabels(true);
+        xAxis.setTextSize(13);
         xAxis.setAxisMinimum(0);
 
         Description description = new Description();
-        description.setText("Daily "+label);
+        description.setText("");
         description.setTextSize(14);
         barChart.setDescription(description);
         barChart.invalidate();

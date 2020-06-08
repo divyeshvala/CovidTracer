@@ -3,6 +3,7 @@ package com.example.ctssd.Activities;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,6 +21,12 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +40,7 @@ public class RegisterActivity extends AppCompatActivity {
     private ProgressBar mLoginProgress;
     private TextView mLoginFeedbackText;
     private String complete_phone_number;
+    private int counter;
 
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallbacks;
 
@@ -125,7 +133,7 @@ public class RegisterActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                             SharedPreferences.Editor editor = settings.edit();
-                            editor.putString("myPhoneNumber", complete_phone_number);
+                            //editor.putString("myPhoneNumber", complete_phone_number);
                             Calendar c1 = Calendar.getInstance();
                             editor.putInt("startingDay", c1.get(Calendar.DAY_OF_MONTH));
                             editor.putInt("startingMonth", c1.get(Calendar.MONTH));
@@ -133,7 +141,7 @@ public class RegisterActivity extends AppCompatActivity {
                             editor.putInt("startingHour", c1.get(Calendar.HOUR_OF_DAY));
                             editor.putInt("startingMinute", c1.get(Calendar.MINUTE));
                             editor.apply();
-                            sendUserToHome();
+                            getUniqueIdOfUser(complete_phone_number);
 
                         } else {
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
@@ -146,6 +154,58 @@ public class RegisterActivity extends AppCompatActivity {
                         mGenerateBtn.setEnabled(true);
                     }
                 });
+    }
+
+    private void getUniqueIdOfUser(final String phone)
+    {
+        final DatabaseReference db = FirebaseDatabase.getInstance().getReference().child("counter");
+        db.addListenerForSingleValueEvent(
+                new ValueEventListener()
+                {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                    {
+                        if(dataSnapshot.exists())
+                        {
+                            counter = dataSnapshot.getValue(Integer.class);
+                            final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference().child("Ids").child(phone);
+                            dbRef.addValueEventListener(
+                                    new ValueEventListener()
+                                    {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                                        {
+                                            if(!dataSnapshot.exists())
+                                            {
+                                                dbRef.setValue(counter+1);
+                                                SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                                                SharedPreferences.Editor edit = settings.edit();
+                                                edit.putString("myDeviceId", String.valueOf(counter+1));
+                                                edit.apply();
+                                                db.setValue(counter+1);
+                                                sendUserToHome();
+                                            }
+                                            else
+                                            {
+                                                SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                                                SharedPreferences.Editor edit = settings.edit();
+                                                edit.putString("myDeviceId", String.valueOf(dataSnapshot.getValue(Integer.class)));
+                                                edit.apply();
+                                                Log.i("Register", "dataSnapshot exists");
+                                                sendUserToHome();
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) { }
+                                    }
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) { }
+                }
+        );
     }
 
     private void sendUserToHome()

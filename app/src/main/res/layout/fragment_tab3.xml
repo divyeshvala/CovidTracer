@@ -32,8 +32,18 @@
             android:text="7 days ago"
             android:layout_marginStart="30dp"
             />
-
     </RadioGroup>
+
+    <TextView
+        android:id="@+id/id_YAxisTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="C\nO\nN\nT\nA\nC\nT\nS"
+        android:layout_marginStart="5dp"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_centerVertical="true"
+        />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/barChart"
@@ -42,11 +52,24 @@
         android:layout_height="match_parent"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:layout_marginLeft="7dp"
-        android:layout_marginRight="7dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="7dp"
         android:visibility="visible"
         android:layout_above="@+id/id_switchGraph"
         />
+
+    <TextView
+        android:id="@+id/id_xAxisTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DATES"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/id_switchGraph"
+        android:layout_marginBottom="5dp"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        />
+
 
     <LinearLayout
         android:id="@+id/id_switchGraph"

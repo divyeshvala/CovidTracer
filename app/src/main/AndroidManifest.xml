@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -14,13 +16,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activities.TempActivity"></activity>
+
+        <activity android:name=".Activities.TempActivity" />
         <activity android:name=".Activities.SelfAssessmentReport" />
         <activity android:name=".Activities.GetPermissionsActivity" />
         <activity android:name=".Activities.CoronaInfoActivity" />
-        <activity android:name=".Admin.DisplayActivity" />
-        <activity android:name=".Admin.AdminHomeActivity" />
-        <activity android:name=".Admin.AdminLoginActivity" />
         <activity
             android:name=".Activities.Main2Activity"
             android:screenOrientation="sensorPortrait" />
@@ -34,7 +34,8 @@
             android:name=".Services.BackgroundService"
             android:enabled="true"
             android:exported="false"
-            android:launchMode="singleTop" />
+            android:launchMode="singleTop"
+            android:stopWithTask="false" />
 
         <activity
             android:name=".Activities.MainActivity"

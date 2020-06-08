@@ -18,10 +18,7 @@ import com.example.ctssd.Activities.Fragments.Tab1;
 import com.example.ctssd.Activities.Fragments.Tab2;
 import com.example.ctssd.Activities.Fragments.Tab3;
 import com.example.ctssd.R;
-import com.example.ctssd.Utils.Utilities;
 import com.google.android.material.tabs.TabLayout;
-
-import java.util.Objects;
 
 public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentInteractionListener, Tab2.OnFragmentInteractionListener, Tab3.OnFragmentInteractionListener {
 
@@ -37,7 +34,13 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
         setContentView(R.layout.activity_main2);
 
         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        myPhoneNumber = settings.getString("myPhoneNumber", "NA");
+        myPhoneNumber = settings.getString("myDeviceId", "NA");
+
+        if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
+        {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_STATE_CHANGED);
+            sendBroadcast(intent);
+        }
 
         IntentFilter intentFilter3 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(turnOnBluetooth, intentFilter3);
@@ -94,16 +97,19 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
     @Override
     public void onFragmentInteraction(Uri uri) { }
 
-        private BroadcastReceiver turnOnBluetooth = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                unregisterReceiver(turnOnBluetooth);
-                if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
-                {
-                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(enableBtIntent, 41);
-                }
+    private BroadcastReceiver turnOnBluetooth = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Log.i("Main2Activity", "turnOnBluetooth receiver is called");
+
+            unregisterReceiver(turnOnBluetooth);
+            if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
+            {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, 41);
             }
+        }
     };
 
 
@@ -114,7 +120,7 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
         if(requestCode==41)
         {
             Log.i("Tab1", "Inside on activity result :"+resultCode);
-            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
+            if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
             {
                 Log.i("Tab1", "Inside on activity result : BT is off");
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);

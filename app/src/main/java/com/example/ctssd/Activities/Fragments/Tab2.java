@@ -23,14 +23,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.Activities.SelfAssessmentReport;
@@ -49,12 +49,10 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
-
 import static android.content.Context.MODE_PRIVATE;
 
 public class Tab2 extends Fragment implements View.OnClickListener
@@ -67,70 +65,93 @@ public class Tab2 extends Fragment implements View.OnClickListener
     private String mParam1;
     private String mParam2;
     private OnFragmentInteractionListener mListener;
-    private ProgressBar currentStatusPBar, riskIndexPBar, averageContactsPBar, locationStatPBar, zoneColorPBar;
+    //private ProgressBar locationStatPBar;
     private TextView todaysNum;
-    private TextView riskIndexText, currentStatus, avgContacts, locationStat, zoneColor;
+    private TextView riskIndexText, currentStatus, avgContacts, violationNumText,
+            maxContactsText, maxRiskIndexText, avgRiskIndexText, BTonTimeText,
+            maxBTonTimeText, avgBTonTimeText;
+    //private TextView zoneColor, locationStat;
     private DatabaseHelper myDb;
     private static String currentStatusVar = "null", locationVar = "null", zoneColorVar = "null";
-    private static int riskIndexVar = -1, zoneVar=0, BluetoothOffTime=0, zoneColorId=0;
-    private static double avgNumVar = -1.0;
+    private static int riskIndexVar = -1, past13DaysRiskSum=0, maxRiskIndexVar=0, maxContactsVar=0,
+            zoneVar=0, BluetoothOffTime=0, zoneColorId=0;
+    private static float BTonTime=0, maxBTonTime=0, past13DaysBTonSum=0;
+
+    private static double avgNumVar = 0.0;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private int requestPermSecCount=0;
-    private static int contactsTodayVar = 0, past13DaySum=0, totalDays=1, preContactsRiskMax=0, preFromContactsToday=0, tryingForLocationCount=0;
+    private static int contactsTodayVar = 0, past13DaySum=0, totalDays=1,
+            tryingForLocationCount=0, violationNumVar=0;
     private static HashMap<String, Integer> messageForRiskIndex = new HashMap<>();
+    private static boolean isRiskUpToDate=false;
 
     public Tab2() {}
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View root = inflater.inflate(R.layout.fragment_tab2, container, false);
 
         todaysNum = root.findViewById(R.id.id_numStat);
-        riskIndexText = root.findViewById(R.id.id_riskIndexStat);
+        riskIndexText = root.findViewById(R.id.id_riskIndexText);
         currentStatus = root.findViewById(R.id.id_currentStatus);
         avgContacts = root.findViewById(R.id.id_avgContacts);
-        locationStat = root.findViewById(R.id.id_locationStat);
-        currentStatusPBar = root.findViewById(R.id.id_currentStatus_progress_bar);
-        riskIndexPBar = root.findViewById(R.id.riskIndex_progress_bar);
-        averageContactsPBar = root.findViewById(R.id.averageContacts_progress_bar);
-        zoneColor = root.findViewById(R.id.id_zoneColor);
-        locationStatPBar = root.findViewById(R.id.locationStat_progress_bar);
-        zoneColorPBar = root.findViewById(R.id.zoneColor_progress_bar);
-        Button CoronaInfoBTN = root.findViewById(R.id.id_goTo_CoronaInfoActivity);
-        Button selfAssessBTN = root.findViewById(R.id.id_selfAssessBTN);
+        maxContactsText = root.findViewById(R.id.id_maxContactsText);
+        maxRiskIndexText = root.findViewById(R.id.id_maxRiskText);
+        avgRiskIndexText = root.findViewById(R.id.id_avgRiskText);
+        //locationStat = root.findViewById(R.id.id_locationStat);
+        //zoneColor = root.findViewById(R.id.id_zoneColor);
+        //locationStatPBar = root.findViewById(R.id.locationStat_progress_bar);
+        violationNumText = root.findViewById(R.id.id_violationText);
+        BTonTimeText = root.findViewById(R.id.id_bluetoothText);
+        maxBTonTimeText = root.findViewById(R.id.id_maxBluetoothText);
+        avgBTonTimeText = root.findViewById(R.id.id_avgBluetooth);
+        RelativeLayout CoronaInfoBTN = root.findViewById(R.id.id_goTo_CoronaInfoActivity);
+        RelativeLayout selfAssessBTN = root.findViewById(R.id.id_selfAssessBTN);
 
-        final SwipeRefreshLayout swipeRefresh = root.findViewById(R.id.swipeRefresh);
-
-        RelativeLayout statusInfo = root.findViewById(R.id.id_currentStatusLayout);
-        RelativeLayout numbersInfo = root.findViewById(R.id.id_contactsTodayLayout);
-        RelativeLayout riskIndexInfo = root.findViewById(R.id.id_riskIndexLayout);
-        RelativeLayout avgContactsInfo = root.findViewById(R.id.id_averageContactsLayout);
-        RelativeLayout locationAndZoneInfo = root.findViewById(R.id.id_warningLayout);
+        //ImageView statusInfo = root.findViewById(R.id.id_currentStatusInfo);
+        ImageView numbersInfo = root.findViewById(R.id.id_contactsTodayInfo);
+        ImageView riskIndexInfo = root.findViewById(R.id.id_riskIndexInfo);
+        //ImageView locationAndZoneInfo = root.findViewById(R.id.id_locationInfo);
+        ImageView violationInfo = root.findViewById(R.id.id_violationInfo);
+        ImageView bluetoothInfo = root.findViewById(R.id.id_bluetoothInfo);
 
         // For displaying info about each stat
-        statusInfo.setOnClickListener(this);
+        //statusInfo.setOnClickListener(this);
         numbersInfo.setOnClickListener(this);
         riskIndexInfo.setOnClickListener(this);
-        avgContactsInfo.setOnClickListener(this);
-        locationAndZoneInfo.setOnClickListener(this);
+        //locationAndZoneInfo.setOnClickListener(this);
+        violationInfo.setOnClickListener(this);
+        bluetoothInfo.setOnClickListener(this);
 
         myDb = new DatabaseHelper(getActivity());
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // for getting lastLocation.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
 
-        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-        preContactsRiskMax = settings.getInt("preContactsRiskMax", 0);
+        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
 
         // Every 24 hours work
         Utilities utilities = new Utilities();
         if(utilities.isTwentyFourHoursOver(getActivity()))
         {
             int preRiskIndex = settings.getInt("myRiskIndex", 0);
-            updateRiskIndex();
-            riskIndexPBar.setVisibility(View.INVISIBLE);
             utilities.TwentyFourHoursWork(getActivity(), preRiskIndex);
+            SharedPreferences.Editor mapEditor = settings.edit();
+            messageForRiskIndex.put("fromContactsRiskMax", 0);
+            mapEditor.putInt("fromContactsRiskMax", 0);
+            mapEditor.apply();
+
+            updateRiskIndex();
+
+            Cursor cursor = myDb.getAllDataTable3();
+            if(cursor!=null && cursor.getCount()>0)
+            {
+                if(utilities.isInternetAvailable(getActivity()))
+                {
+                    Log.i(TAG, "Uploading data to cloud");
+                    utilities.uploadDataToCloud(getActivity());
+                }
+            }
         }
         else
         {
@@ -139,9 +160,10 @@ public class Tab2 extends Fragment implements View.OnClickListener
             messageForRiskIndex.put("fromContactsToday", settings.getInt("fromContactsToday", 0));
             messageForRiskIndex.put("fromBluetoothOffTime", settings.getInt("fromBluetoothOffTime", 0));
             messageForRiskIndex.put("fromCrowdInstances", settings.getInt("fromCrowdInstances", 0));
-            messageForRiskIndex.put("fromSelfAssessReport", settings.getInt("riskFromReport", 0));
+            //messageForRiskIndex.put("fromSelfAssessReport", settings.getInt("riskFromReport", 0));
         }
-
+        violationNumVar = settings.getInt("crowdNo", 0);
+        BTonTime = settings.getFloat("totalBTOnTime", 0);
         totalDays = settings.getInt("totalDays", 1);  // since the app installation
 
         // register receiver for broadcast when contact today is changed
@@ -149,6 +171,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
         getActivity().registerReceiver(receiver, intentFilter);
         IntentFilter intentFilter2 = new IntentFilter("ACTION_UPDATE_RISK");
         getActivity().registerReceiver(receiver, intentFilter2);
+        IntentFilter intentFilte = new IntentFilter("ACTION_UPDATE_RISK_HALF_HOUR");
+        getActivity().registerReceiver(receiver, intentFilte);
 
         // Goto about corona information page.
         CoronaInfoBTN.setOnClickListener(new View.OnClickListener() {
@@ -165,27 +189,24 @@ public class Tab2 extends Fragment implements View.OnClickListener
             }
         });
 
-        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                Log.i(TAG, "Refreshing...");
-                updateRiskIndex();
-                swipeRefresh.setRefreshing(false);
-            }
-        });
-
         // start BackgroundService for discovering nearby devices
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(getActivity(), BackgroundService.class);
-                Objects.requireNonNull(getContext()).startService(intent);
+                //Objects.requireNonNull(getContext()).startService(intent);
+                ContextCompat.startForegroundService(Objects.requireNonNull(getActivity()), intent);
             }
         }).start();
+
+        // get past 13 day sum of contacts.
+        past13DaySum = findPast13DaySum();
+        findAverageAndMaxRiskAndBTonTime();
 
         // Assign values to the stats
         setStatsValues();
 
+        // Getting location of user.
         IntentFilter intentFilter3 = new IntentFilter("LOCATION_FOUND"); getActivity().registerReceiver(locationReceiver, intentFilter3);
         IntentFilter intentFilter4 = new IntentFilter("GPS_PERMISSION"); getActivity().registerReceiver(locationReceiver, intentFilter4);
         IntentFilter intentFilter5 = new IntentFilter("ENABLE_GPS"); getActivity().registerReceiver(locationReceiver, intentFilter5);
@@ -217,12 +238,15 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 Cursor cursor = myDb.getAllData();
                 if(cursor!=null)
                 {
-                    contactsTodayVar = cursor.getCount();
+                    SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                    contactsTodayVar = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
                     todaysNum.setText(String.valueOf(contactsTodayVar));
                     avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
-                    Log.i(TAG, "AVERAGE :"+(past13DaySum + contactsTodayVar)+"  "+totalDays);
                     avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
-                    Log.i(TAG, "Average contacts :" + String.format("%.2f", avgNumVar));
+                    if(contactsTodayVar>maxContactsVar) {
+                        maxContactsVar = contactsTodayVar;
+                        maxContactsText.setText(String.valueOf(maxContactsVar));
+                    }
                     cursor.close();
                 }
             }
@@ -232,21 +256,9 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 // scale it on 20.
                 riskFromReport = (20*riskFromReport)/27;
 
-                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
+                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
                 int preRiskFromReport = settings.getInt("riskFromReport", 0);
                 riskIndexVar = riskIndexVar + (riskFromReport-preRiskFromReport);
-
-                riskIndexText.setText(riskIndexVar+"%");
-                if(riskIndexVar<=33)
-                {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";    }
-                else if(riskIndexVar<=66)
-                {    currentStatus.setText("High risk");  currentStatusVar="High risk"; }
-                else
-                {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";   }
-
-                // update name of device after updating riskIndex
-                bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-                Log.i(TAG, "Your name changed :"+AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
 
                 SharedPreferences.Editor editor = settings.edit();
                 editor.putInt("myRiskIndex", riskIndexVar);
@@ -255,10 +267,75 @@ public class Tab2 extends Fragment implements View.OnClickListener
                 editor.putString("lastSumbit", Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+"-"+Calendar.getInstance().get(Calendar.MONTH)+"-"+Calendar.getInstance().get(Calendar.YEAR));
                 editor.apply();
 
-                messageForRiskIndex.put("fromSelfAssessReport", riskFromReport);
+                updateRiskView();
+
+                Intent intent2 = new Intent("ACTION_UPDATE_RISK_GRAPH");
+                intent2.putExtra("riskIndex", riskIndexVar);
+                getActivity().sendBroadcast(intent2);
+            }
+            else if(action!=null && action.equals("ACTION_UPDATE_RISK_HALF_HOUR"))
+            {
+                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                // update BTonTime.
+                BTonTime = settings.getFloat("totalBTOnTime", 0);
+                BTonTimeText.setText(BTonTime+" Hrs");
+                if(BTonTime>maxBTonTime) {
+                    maxBTonTime = BTonTime;
+                    maxBTonTimeText.setText(maxBTonTime + " Hrs");
+                }
+                if(totalDays>=14) {
+                    avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / 14) + " Hrs");
+                }
+                else {
+                    avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / totalDays)+" Hrs");
+                }
+
+                // updating risk factor
+                int maxRiskFromContacts = intent.getIntExtra("maxRiskFromContacts", 0);
+                if(maxRiskIndexVar >= maxRiskFromContacts)
+                    return;
+
+                int preFomContactsRiskMax = settings.getInt("fromContactsRiskMax", 0);
+                if(preFomContactsRiskMax>=(3*maxRiskFromContacts)/10)
+                    return;
+                int fromContactsRiskMax = (3*maxRiskFromContacts)/10;
+
+                SharedPreferences.Editor mapEditor = settings.edit();
+                messageForRiskIndex.put("fromContactsRiskMax", fromContactsRiskMax);
+                mapEditor.putInt("fromContactsRiskMax", fromContactsRiskMax);
+                mapEditor.apply();
+
+                updateRiskIndex();
+
+                Utilities util = new Utilities();
+                util.sendNotification(getActivity(), "Your Risk Factor", "Your current Risk Factor is "+riskIndexVar+".\nBe careful");
             }
         }
     };
+
+    private void updateRiskView()
+    {
+        riskIndexText.setText(riskIndexVar+"%");
+        if(riskIndexVar<=33)
+        {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";    }
+        else if(riskIndexVar<=66)
+        {    currentStatus.setText("High risk");  currentStatusVar="High risk"; }
+        else
+        {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";   }
+
+        if(riskIndexVar>maxRiskIndexVar)
+        {
+            maxRiskIndexVar = riskIndexVar;
+            maxRiskIndexText.setText(String.valueOf(maxRiskIndexVar)+"%");
+            bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+maxRiskIndexVar);
+            Log.i(TAG, "Your name changed :"+bluetoothAdapter.getName());
+        }
+        if(totalDays>14)
+            avgRiskIndexText.setText(String.valueOf((past13DaysRiskSum+riskIndexVar)/14)+"%");
+        else
+            avgRiskIndexText.setText(String.valueOf((past13DaysRiskSum+riskIndexVar)/totalDays)+"%");
+
+    }
 
     private void updateRiskIndex()
     {
@@ -266,123 +343,101 @@ public class Tab2 extends Fragment implements View.OnClickListener
         SharedPreferences.Editor mapEditor = settings.edit();
 
         // 1. max risk factors of contacts (scaled on 20)
-        int fromContactsRiskMax=0;
-        Cursor cursor = myDb.getAllData();
-        if(cursor!=null)
-        {
-            while (cursor.moveToNext())
-            {
-                if(fromContactsRiskMax<cursor.getInt(2))
-                    fromContactsRiskMax = cursor.getInt(2);
-            }
-        }
-        if(fromContactsRiskMax>preContactsRiskMax)
-        {
-            fromContactsRiskMax = (20*fromContactsRiskMax)/100;
-            preContactsRiskMax = fromContactsRiskMax;
-            SharedPreferences.Editor ed = settings.edit();
-            ed.putInt("preContactsRiskMax", preContactsRiskMax);
-            ed.apply();
-        }
-        else
-        {
-            fromContactsRiskMax = preContactsRiskMax;
-        }
-        messageForRiskIndex.put("fromContactsRisk", fromContactsRiskMax);
-        mapEditor.putInt("fromContactsRiskMax", fromContactsRiskMax);
+        int fromContactsRiskMax = settings.getInt("fromContactsRiskMax", 0);
 
         //2. contacts today (But really yesterday)
         int fromContactsToday=0;
+        Cursor cursor = myDb.getAllData();
         if(cursor!=null)
         {
-            fromContactsToday = cursor.getCount();
+            contactsTodayVar = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
+            fromContactsToday = contactsTodayVar;
         }
         if(fromContactsToday>10)
         {
-            if((fromContactsToday-10)/2 < 20)
-                fromContactsToday = (fromContactsToday-10)/2;
+            if((fromContactsToday-10) < 30)
+                fromContactsToday = (fromContactsToday-10);
             else
-                fromContactsToday = 20;
+                fromContactsToday = 30;
         }
         else
             fromContactsToday = 0;
-
         messageForRiskIndex.put("fromContactsToday", fromContactsToday);
         mapEditor.putInt("fromContactsToday", fromContactsToday);
 
         //3. Numbers of hours user's bluetooth was off.
         Utilities utilities = new Utilities();
         BluetoothOffTime = (int) utilities.getTotalBluetoothOffTime(Objects.requireNonNull(getActivity()));
-        Log.i(TAG, "TotalBTOffTime :" + BluetoothOffTime);
-        int fromBluetoothOffTime = 0;
-        if(BluetoothOffTime<15)
-            fromBluetoothOffTime += BluetoothOffTime;
-        else
-            fromBluetoothOffTime += 15;
+        int fromBluetoothOffTime = settings.getInt("bluetoothPenalty", 0);
+        fromBluetoothOffTime += (BluetoothOffTime*0.5);
+        if(fromBluetoothOffTime>15)
+            fromBluetoothOffTime = 15;
         messageForRiskIndex.put("fromBluetoothOffTime", fromBluetoothOffTime);
         mapEditor.putInt("fromBluetoothOffTime", fromBluetoothOffTime);
 
         //4. Number of times user was standing in crowd.
         int CrowdNo = settings.getInt("crowdNo", 0);
-        int fromCrowdInstances = CrowdNo*5;
+        int fromCrowdInstances=0;
+        if(CrowdNo>2)
+            fromCrowdInstances = (CrowdNo-2)*5;
+        if(fromCrowdInstances>25)
+            fromCrowdInstances = 25;
         messageForRiskIndex.put("fromCrowdInstances", fromCrowdInstances);
         mapEditor.putInt("fromCrowdInstances", fromCrowdInstances);
         mapEditor.apply();
 
         // 5. from Self assessment report.
-        int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
-        messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
+//        int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
+//        messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
 
-        int tempRiskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances+fromSelfAssessReport;
+        int tempRiskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances;
         if(riskIndexVar!=tempRiskIndex)
         {
             riskIndexVar = tempRiskIndex;
             if(riskIndexVar>100)
                 riskIndexVar=100;
-            riskIndexText.setText(riskIndexVar + "%");
-            riskIndexPBar.setVisibility(View.INVISIBLE);
 
-            if(riskIndexVar<=33)
-            {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
-            else if(riskIndexVar<=66)
-            {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
-            else
-            {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
-
-            // update name of device after updating riskIndex
-            bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-            Log.i(TAG, "Your name changed :"+AppId+Main2Activity.myPhoneNumber+"_"+riskIndexVar);
-
+            updateRiskView();
             SharedPreferences.Editor editor = settings.edit();
             editor.putInt("myRiskIndex", riskIndexVar);
             editor.apply();
+
+            Intent intent2 = new Intent("ACTION_UPDATE_RISK_GRAPH");
+            intent2.putExtra("riskIndex", riskIndexVar);
+            getActivity().sendBroadcast(intent2);
         }
     }
 
     private void setStatsValues()
     {
+        SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
         Cursor cursor = myDb.getAllData();
-        if (cursor != null) {
-            contactsTodayVar = cursor.getCount();
+        if (cursor != null)
+        {
+            contactsTodayVar = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
             todaysNum.setText(String.valueOf(contactsTodayVar));
             cursor.close();
         }
+        violationNumVar = settings.getInt("crowdNo", 0);
+        BTonTime = settings.getFloat("totalBTOnTime", 0);
 
-        // get past 13 day sum of contacts.
-        past13DaySum = findPast13DaySum();
         avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
         avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
-        averageContactsPBar.setVisibility(View.INVISIBLE);
+        if(contactsTodayVar>maxContactsVar)
+            maxContactsVar = contactsTodayVar;
+        maxContactsText.setText(String.valueOf(maxContactsVar));
 
-        if (locationVar!=null && (!locationVar.equals("null"))) {
-            locationStat.setText(locationVar);
-            locationStatPBar.setVisibility(View.INVISIBLE);
-            locationStat.setTextColor(getResources().getColor(zoneColorId));
-        }
-        if (!zoneColorVar.equals("null")) {
-            zoneColor.setText(zoneColorVar);
-            zoneColor.setTextColor(getResources().getColor(zoneColorId));
-        }
+        violationNumText.setText(String.valueOf(violationNumVar));
+
+//        if (locationVar!=null && (!locationVar.equals("null"))) {
+//            locationStat.setText(locationVar);
+//            locationStatPBar.setVisibility(View.INVISIBLE);
+//            locationStat.setTextColor(getResources().getColor(zoneColorId));
+//        }
+//        if (!zoneColorVar.equals("null")) {
+//            zoneColor.setText(zoneColorVar);
+//            zoneColor.setTextColor(getResources().getColor(zoneColorId));
+//        }
 
         if(riskIndexVar<=33)
         {    currentStatus.setText("Low risk"); currentStatusVar="Low risk";}
@@ -390,12 +445,58 @@ public class Tab2 extends Fragment implements View.OnClickListener
         {    currentStatus.setText("High risk");  currentStatusVar="High risk";}
         else
         {    currentStatus.setText("Very high risk");  currentStatusVar="Very high risk";}
-        currentStatusPBar.setVisibility(View.INVISIBLE);
+
         riskIndexText.setText(riskIndexVar+"%");
-        riskIndexPBar.setVisibility(View.INVISIBLE);
+        BTonTimeText.setText(BTonTime+" Hrs");
+
+        maxRiskIndexText.setText(String.valueOf(maxRiskIndexVar)+"%");
+        maxBTonTimeText.setText(maxBTonTime+" Hrs");
+        if(totalDays>=14) {
+            avgRiskIndexText.setText(String.valueOf((past13DaysRiskSum + riskIndexVar) / 14) + "%");
+            avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / 14) + " Hrs");
+        }
+        else {
+            avgRiskIndexText.setText(String.valueOf((past13DaysRiskSum + riskIndexVar) / totalDays) + "%");
+            avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / totalDays)+" Hrs");
+        }
+
+        bluetoothAdapter.setName(AppId+Main2Activity.myPhoneNumber+"_"+maxRiskIndexVar);
+        Log.i(TAG, "Your name changed :"+bluetoothAdapter.getName());
     }
 
-    // receiver when new device is found. update contacts today
+    private void findAverageAndMaxRiskAndBTonTime()
+    {
+        Cursor cursor1 = myDb.getAllDataTable2();
+        int s=0, mx=0, temp;
+        float BTs=0, BTtemp, BTmx=0;
+        while(cursor1!=null && cursor1.moveToNext())
+        {
+            temp = cursor1.getInt(2);
+            BTtemp = cursor1.getFloat(3);
+            BTs += BTtemp;
+            s += temp;
+            if(temp>mx)
+                mx = temp;
+            if(BTtemp>BTmx)
+                BTmx = BTtemp;
+        }
+        past13DaysRiskSum = s;
+        maxRiskIndexVar = mx;
+
+        past13DaysBTonSum = BTs;
+        maxBTonTime = BTmx;
+
+        if(BTonTime>BTmx)
+            maxBTonTime = BTonTime;
+
+        if(riskIndexVar>mx)
+            maxRiskIndexVar = riskIndexVar;
+
+        Log.i(TAG, "risk sum, days :"+past13DaysRiskSum+", "+totalDays);
+        Log.i(TAG, "BT sum, days :"+past13DaysBTonSum+", "+totalDays);
+
+    }
+
     private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent)
         {
@@ -427,12 +528,11 @@ public class Tab2 extends Fragment implements View.OnClickListener
                         zoneVar = 0;
                         zoneColorId = R.color.colorPrimary;
                     }
-                    zoneColor.setText(zoneColorVar);
-                    zoneColor.setTextColor(getResources().getColor(zoneColorId));
-                    locationStat.setText(city);
-                    locationStat.setTextColor(getResources().getColor(zoneColorId));
-                    zoneColorPBar.setVisibility(View.INVISIBLE);
-                    locationStatPBar.setVisibility(View.INVISIBLE);
+//                    zoneColor.setText(zoneColorVar);
+//                    zoneColor.setTextColor(getResources().getColor(zoneColorId));
+//                    locationStat.setText(city);
+//                    locationStat.setTextColor(getResources().getColor(zoneColorId));
+//                    locationStatPBar.setVisibility(View.INVISIBLE);
                     myDb.insertDataTable4(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+"-"+Calendar.getInstance().get(Calendar.MONTH)+"-"+Calendar.getInstance().get(Calendar.YEAR), Calendar.getInstance().get(Calendar.HOUR_OF_DAY)+":"+Calendar.getInstance().get(Calendar.MINUTE), city);
                     break;
 
@@ -445,8 +545,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
                     tryingForLocationCount++;
                     if(tryingForLocationCount>=2)
                     {
-                        locationStat.setText("Not found");
-                        locationStatPBar.setVisibility(View.INVISIBLE);
+                        //locationStat.setText("Not found");
+                        //locationStatPBar.setVisibility(View.INVISIBLE);
                     }
                     enableGPS();
                     break;
@@ -521,21 +621,25 @@ public class Tab2 extends Fragment implements View.OnClickListener
 
     private int findPast13DaySum() {
         int s = 0;
+        maxContactsVar = 0;
         Cursor cursor = myDb.getAllDataTable2();
         if (cursor == null)
             return 0;
-        int i=0;
+        int  mx=0, temp;
         while (cursor.moveToNext()) {
-            s += cursor.getInt(1);
-            i++;
+            temp= cursor.getInt(1);
+            s += temp;
+            if(temp>mx)
+                mx = temp;
         }
-        Log.i(TAG, "Total records in table2 - "+ i);
         cursor.close();
+        maxContactsVar = mx;
         return s;
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode==42)
         {
@@ -554,7 +658,8 @@ public class Tab2 extends Fragment implements View.OnClickListener
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         Log.i(TAG, "inside onActivityResult");
-        switch (requestCode) {
+        switch (requestCode)
+        {
             case LocationRequest.PRIORITY_HIGH_ACCURACY:
                 switch (resultCode)
                 {
@@ -587,47 +692,49 @@ public class Tab2 extends Fragment implements View.OnClickListener
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.id_contactsTodayLayout:
+            case R.id.id_contactsTodayInfo:
                 Cursor cursor = myDb.getAllData();
-                String list ="Phone number        Risk factor\n";
+                String list ="DID   MR  Time\n";
                 if(cursor!=null)
                 {
                     while (cursor.moveToNext())
                     {
-                        list += cursor.getString(0)+"    "+cursor.getInt(2)+"\n";
+                        list += cursor.getString(0)+"   "+cursor.getInt(2)+"   "+cursor.getString(1)+"\n";
                     }
                 }
-                Utilities.showMessage(getActivity(), "Todays Contacts", list);
+                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                int penalty = settings.getInt("contactsTodayPenalty", 0);
+                Utilities.showMessage(getActivity(), "Contacts", "Contacts Today shows number of people who were in your close proximity today.\n\n" +
+                        "Maximum Contacts shows maximum number of people you have contacted in last 14 days.\n\npenalty ="+penalty+"\n\n"+list);
                 return;
-            case R.id.id_averageContactsLayout:
-                String str = "\nTotal contacts :"+(past13DaySum+contactsTodayVar)+"\n"+"Total days :"+totalDays;
-                Utilities.showMessage(getActivity(), "Average", "Average number of people you have contacted in last 14 days."+str);
+            case R.id.id_violationInfo:
+                Utilities.showMessage(getActivity(), "Violation of social distancing", "Each time you are standing in the crowd with more than 7 people, you are violating the rule of social distancing.");
                 return;
-            case R.id.id_currentStatusLayout:
-                Utilities.showMessage(getActivity(), "Current Status", "Meaning of keywords used...\n\npositive - You are Covid19 positive patient.\n\ndirect_contact - You have directly contacted covid19 positive person.\n\n" +
-                        "indirect_contact - You have indirectly contacted covid19 positive person.\n\nsafe - You have not contacted any covid19 positive person directly or indirectly.");
-                return;
-            case R.id.id_riskIndexLayout:
-                String message = "Calculation of risk index \n";
+            case R.id.id_riskIndexInfo:
+                String message = "\n\nCalculation in this case- \n";
                 for(HashMap.Entry element : messageForRiskIndex.entrySet())
                 {
                     message += element.getKey() +" : "+ element.getValue()+"\n";
                 }
-                Utilities.showMessage(getActivity(), "Risk Index", message);
-                // It is percentage of risk based on your contacts in last 14 days, your location and whether you have contacted positive patient directly or indirectly.
+                Utilities.showMessage(getActivity(), "Risk Factor", "Risk factor shows your daily risk of getting infection.\n It is based on 5 factors:\n" +
+                        "1. Number of people contacted in a day\n" +
+                        "2. Risk factor of your contacts\n" +
+                        "3. For how much time your bluetooth was off.\n" +
+                        "4. Number of times you were standing in the crowd\n" +
+                        "5. Self assessment report submitted  by you."+message);
                 return;
 
-            case R.id.id_warningLayout:
-//                Cursor cur = myDb.getAllDataTable3();
-//                String lst ="Sr. day-month-year    phone\n";
-//                if(cur!=null)
+//            case R.id.id_locationInfo:
+//                Utilities.showMessage(getActivity(), "Location status", "It shows whether your current location is red zone or green zone.\n");
+//                return;
+            case R.id.id_bluetoothInfo:
+//                Cursor cursor1 = myDb.getAllDataTable2();
+//                String msg="Risk    BTon\n";
+//                while(cursor1!=null && cursor1.moveToNext())
 //                {
-//                    while (cur.moveToNext())
-//                    {
-//                        lst += cur.getInt(0)+"  "+cur.getInt(1)+":"+cur.getInt(2)+":"+cur.getInt(3)+"   "+cur.getString(4)+"\n";
-//                    }
+//                    msg += cursor1.getInt(2)+"     "+cursor1.getFloat(3)+"\n";
 //                }
-                Utilities.showMessage(getActivity(), "Location status", "It shows whether your current location is red zone or green zone.\n");
+                Utilities.showMessage(getActivity(), "Bluetooth On Time", "It shows for how many hours your bluetooth was on today. It will be updated every 15 minutes.");
         }
     }
 

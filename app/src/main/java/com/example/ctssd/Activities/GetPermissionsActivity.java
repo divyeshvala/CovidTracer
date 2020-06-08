@@ -5,15 +5,19 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.example.ctssd.R;
+
+import java.util.List;
 
 public class GetPermissionsActivity extends AppCompatActivity {
 
@@ -32,7 +36,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        myPhoneNumber = settings.getString("myPhoneNumber", "NA");
+        myPhoneNumber = settings.getString("myDeviceId", "NA");
         riskIndex = settings.getInt("myRiskIndex", 0);
         Log.i(TAG, "RiskIndex from shared preferences :"+riskIndex);
 
@@ -45,6 +49,38 @@ public class GetPermissionsActivity extends AppCompatActivity {
 
         getPermissions();
 
+    }
+
+    private void addAutoStartup() {
+
+        try {
+            Intent intent = new Intent();
+            String manufacturer = android.os.Build.MANUFACTURER;
+            if ("xiaomi".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
+            } else if ("oppo".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
+            } else if ("vivo".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
+            } else if ("Letv".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
+            } else if ("Honor".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"));
+            }
+
+            List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            if  (list.size() > 0) {
+                startActivityForResult(intent, 53);
+            }
+            else
+            {
+                Intent intent23 = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                startActivity(intent23);
+                finish();
+            }
+        } catch (Exception e) {
+            Log.e("exc" , String.valueOf(e));
+        }
     }
 
     private void setupBluetooth() {
@@ -89,6 +125,9 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 break;
 
             case 45:
+                // TODO: testing
+                //addAutoStartup(); // This should happen 1 time only.
+                //Log.i(TAG, "We returned from autostart.");
                 Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
                 startActivity(intent);
                 finish();

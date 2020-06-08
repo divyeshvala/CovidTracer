@@ -1,0 +1,44 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:padding="5dp" >
+
+    <ImageView
+        android:src="@drawable/ic_transfer_within_a_station_black_24dp"
+        android:id="@+id/image"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="10dp" />
+
+    <TextView
+        android:id="@+id/id_notif_center"
+        android:layout_width="wrap_content"
+        android:layout_height="1dp"
+        android:layout_centerInParent="true"
+        />
+
+    <TextView
+        android:textSize="16sp"
+        android:textColor="#213AD3"
+        android:text="Covid Tracer"
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:layout_above="@id/id_notif_center"
+        android:layout_toEndOf="@id/image"
+        />
+    <TextView
+        android:textSize="15sp"
+        android:textColor="#3949AB"
+        android:text="App is running in background."
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/image"
+        android:layout_below="@id/id_notif_center"
+        />
+
+</RelativeLayout>
