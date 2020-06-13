@@ -7,7 +7,6 @@ package com.example.ctssd.Services;
 
 import android.Manifest;
 import android.app.AlarmManager;
-import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -35,13 +34,9 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
-
-import com.example.ctssd.Activities.Fragments.Tab2;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.DatabaseHelper;
@@ -79,6 +74,7 @@ public class BackgroundService extends Service {
     private static boolean isUserMoving = false;
     private static String deviceId;
     private static int contactsTodayGlobal = 0, riskIndexGlobal = 0;
+    private String temp="";
 
     private Alarm alarm = new Alarm();
 
@@ -138,6 +134,61 @@ public class BackgroundService extends Service {
         //Utilities utilities = new Utilities();
         //utilities.sendNotification(getApplicationContext(), "Location", "You have travelled "+dist+"meters distance in past 30seconds.\n"+"Your coordinates : "+latitude+"\n"+longitude,
                // 311, "locationTemp1");
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        Log.i(TAG, "Inside onCreate...");
+        Toast.makeText(this, "inside onCreate", Toast.LENGTH_SHORT).show();
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate
+                (new Runnable() {
+                    public void run() {
+                        //temp += Calendar.getInstance().get(Calendar.MINUTE)+":"+Calendar.getInstance().get(Calendar.SECOND)+"=";
+                        Log.i(TAG, "Sheduler has been called "+temp);
+
+                        //Utilities utilities = new Utilities();
+                        //utilities.sendTempNotification(getApplication(), "BTOnTime", temp, 111, "tempC");
+
+                        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                        SharedPreferences.Editor edit = settings.edit();
+                        if(bluetoothAdapter.getState()==BluetoothAdapter.STATE_ON)
+                        {
+                            Log.i(TAG, "BT is on");
+                            float totalBTOnTime = settings.getFloat("totalBTOnTime", 0);
+                            totalBTOnTime += 0.50;
+                            edit.putFloat("totalBTOnTime", totalBTOnTime);
+                            Log.i(TAG, "TotalBTOnTime :"+totalBTOnTime);
+                        }
+                        else if(isUserMoving)
+                        {
+                            edit.putInt("bluetoothPenalty", settings.getInt("bluetoothPenalty", 0)+1);
+                        }
+                        int preMaxRFC = settings.getInt("maxRiskFromContacts", 0);
+                        if( maxRiskFromContacts>preMaxRFC )
+                        {
+                            edit.putInt("maxRiskFromContacts", maxRiskFromContacts);
+                            maxRiskFromContacts = 0;
+                        }
+                        if(isUserMoving && BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
+                        {
+                            edit.putInt("bluetoothPenalty", (settings.getInt("bluetoothPenalty", 0)+1));
+                            isUserMoving=false;
+                        }
+                        edit.apply();
+                        findRiskIndex();
+
+                        if(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)>=22)
+                        {
+                            Intent intent1 = new Intent("ACTION_STOP_SERVICE");
+                            sendBroadcast(intent1);
+                        }
+                    }
+                }, 30, 30, TimeUnit.MINUTES); //todo
+
     }
 
     @Override
@@ -211,46 +262,6 @@ public class BackgroundService extends Service {
         IntentFilter intentFilter5 = new IntentFilter("ACTION_STOP_SERVICE");
         registerReceiver(stopServiceReceiver, intentFilter5);
 
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate
-                (new Runnable() {
-                    public void run() {
-                        Log.i(TAG, "Sheduler has been called");
-                        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-                        SharedPreferences.Editor edit = settings.edit();
-                        if(bluetoothAdapter.getState()==BluetoothAdapter.STATE_ON)
-                        {
-                            Log.i(TAG, "BT is on");
-                            float totalBTOnTime = settings.getFloat("totalBTOnTime", 0);
-                            totalBTOnTime += 0.50;
-                            edit.putFloat("totalBTOnTime", totalBTOnTime);
-                            Log.i(TAG, "TotalBTOnTime :"+totalBTOnTime);
-                        }
-                        else if(isUserMoving)
-                        {
-                            edit.putInt("bluetoothPenalty", settings.getInt("bluetoothPenalty", 0)+1);
-                        }
-                        int preMaxRFC = settings.getInt("maxRiskFromContacts", 0);
-                        if( maxRiskFromContacts>preMaxRFC )
-                        {
-                            edit.putInt("maxRiskFromContacts", maxRiskFromContacts);
-                            maxRiskFromContacts = 0;
-                        }
-                        if(isUserMoving && BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
-                        {
-                            edit.putInt("bluetoothPenalty", (settings.getInt("bluetoothPenalty", 0)+1));
-                            isUserMoving=false;
-                        }
-                        edit.apply();
-                        findRiskIndex();
-
-                        if(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)>=22)
-                        {
-                            Intent intent1 = new Intent("ACTION_STOP_SERVICE");
-                            sendBroadcast(intent1);
-                        }
-                    }
-                }, 30, 30, TimeUnit.MINUTES);
         //return START_REDELIVER_INTENT;  //TODO: START_STICKY
         return START_STICKY;
     }
@@ -273,7 +284,7 @@ public class BackgroundService extends Service {
         {
             Log.i("LocationTab2", "requestLocUpdates2");
             locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 60000, 1, locationListener);
+                    LocationManager.GPS_PROVIDER, 120000, 20, locationListener);
         }
 
 //        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
@@ -343,6 +354,11 @@ public class BackgroundService extends Service {
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.cancel(112);
+
+            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
+            {
+                notificationManager.cancel(1245);
+            }
 
             stopForeground(true);
             stopSelf();

@@ -302,14 +302,13 @@ public class Utilities
         notificationManager.notify(112, notification);
     }
 
-    public void sendNotification(Context context, String title, String text, int notifId, String channelId)
+    public void sendTempNotification(Context context, String title, String text, int notifId, String channelId)
     {
-        Log.i("Utilities", "Inside send notification");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            CharSequence name = "locUpdate";
-            String description = "updates of loc";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            CharSequence name = "temp";
+            String description = "temp notification";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(channelId, name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
@@ -317,17 +316,19 @@ public class Utilities
         }
         Intent activityIntent = new Intent(context, Main2Activity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(context,
-                notifId, activityIntent, 0);
+                0, activityIntent, 0);
 
         Notification notification = new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_phone_android_black_24dp)
+                .setSmallIcon(R.drawable.ic_bluetooth_black_24dp)
                 .setContentTitle(title)
                 .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setColor(Color.BLUE)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
+                .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .build();
 

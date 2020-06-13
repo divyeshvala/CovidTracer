@@ -5,7 +5,6 @@
 package com.example.ctssd.Activities.Fragments;
 
 import android.Manifest;
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,7 +16,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,21 +25,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
-import com.example.ctssd.Activities.SelfAssessmentReport;
 import com.example.ctssd.R;
 import com.example.ctssd.Services.BackgroundService;
 import com.example.ctssd.Utils.DatabaseHelper;
@@ -57,9 +48,6 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
-import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
