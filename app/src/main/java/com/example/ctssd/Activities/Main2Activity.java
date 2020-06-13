@@ -42,6 +42,8 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
             sendBroadcast(intent);
         }
 
+        //startService(new Intent(this, BackgroundLocationService.class));
+
         IntentFilter intentFilter3 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(turnOnBluetooth, intentFilter3);
 

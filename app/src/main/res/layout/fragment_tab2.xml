@@ -12,13 +12,12 @@
 <!--        android:id="@+id/swipeRefresh"-->
 <!--        android:layout_width="match_parent"-->
 <!--        android:layout_height="match_parent"-->
-<!--        android:layout_marginBottom="60dp"-->
 <!--        >-->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentStart="true"
-            android:layout_marginTop="5dp"
+            android:layout_marginBottom="10dp"
             >
 
             <TableLayout
@@ -156,8 +155,8 @@
                             android:layout_weight="0.5"
                             android:layout_width="0dp"
                             android:layout_height="100dp"
-                            android:layout_marginEnd="1dp"
-                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="1.5dp"
+                            android:layout_marginStart="3dp"
                             android:background="@drawable/subacard_background"
                             >
                             <TextView
@@ -193,8 +192,8 @@
                             android:layout_weight="0.5"
                             android:layout_width="0dp"
                             android:layout_height="100dp"
-                            android:layout_marginStart="2dp"
-                            android:layout_marginEnd="2dp"
+                            android:layout_marginStart="1.5dp"
+                            android:layout_marginEnd="3dp"
                             android:background="@drawable/subacard_background"
                             >
                             <TextView
@@ -247,7 +246,7 @@
                             android:id="@+id/id_contactsIcon"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/icon_proximity"
+                            android:background="@drawable/ic_people_black_24dp"
                             android:layout_centerVertical="true"
                             android:layout_marginStart="20dp"
                             android:contentDescription="Status icon"
@@ -298,14 +297,13 @@
                         android:orientation="horizontal"
                         android:baselineAligned="false"
                         android:layout_below="@id/id_contactsLayout"
-                        android:layout_marginBottom="5dp"
                         >
                         <RelativeLayout
                             android:layout_weight="0.5"
                             android:layout_width="0dp"
                             android:layout_height="100dp"
-                            android:layout_marginEnd="2.5dp"
-                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="3dp"
+                            android:layout_marginStart="1.5dp"
                             android:background="@drawable/subacard_background"
                             >
                             <TextView
@@ -341,8 +339,8 @@
                             android:layout_weight="0.5"
                             android:layout_width="0dp"
                             android:layout_height="100dp"
-                            android:layout_marginStart="2.5dp"
-                            android:layout_marginEnd="5dp"
+                            android:layout_marginStart="1.5dp"
+                            android:layout_marginEnd="3dp"
                             android:background="@drawable/subacard_background"
                             >
                             <TextView
@@ -393,7 +391,7 @@
                             android:id="@+id/id_bluetoothIcon"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/icon_risk"
+                            android:background="@drawable/ic_bluetooth_black_24dp"
                             android:layout_centerVertical="true"
                             android:layout_marginStart="20dp"
                             android:contentDescription="Status icon"
@@ -449,8 +447,8 @@
                             android:layout_weight="0.5"
                             android:layout_width="0dp"
                             android:layout_height="100dp"
-                            android:layout_marginEnd="2.5dp"
-                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="3dp"
+                            android:layout_marginStart="1.5dp"
                             android:background="@drawable/subacard_background"
                             >
                             <TextView
@@ -459,6 +457,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="Maximum"
                                 android:textSize="16sp"
+                                android:textColor="@color/colorStatsText"
                                 android:textAlignment="center"
                                 android:layout_above="@+id/id_maxBluetoothCenter"
                                 />
@@ -485,8 +484,8 @@
                             android:layout_weight="0.5"
                             android:layout_width="0dp"
                             android:layout_height="100dp"
-                            android:layout_marginStart="2.5dp"
-                            android:layout_marginEnd="5dp"
+                            android:layout_marginStart="1.5dp"
+                            android:layout_marginEnd="3dp"
                             android:background="@drawable/subacard_background"
                             >
                             <TextView
@@ -523,9 +522,9 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="120dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="@dimen/card_topMargin"
+                    android:layout_marginEnd="@dimen/card_sideMargin"
+                    android:layout_marginStart="@dimen/card_sideMargin"
                     android:background="@drawable/card_background_white"
                     >
 
@@ -592,9 +591,9 @@
 
 <!--    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/id_bottomLayout"
-        android:layout_width="match_parent"
+        android:layout_width="130dp"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:baselineAligned="false"
@@ -602,27 +601,27 @@
         android:alpha="0.7"
         android:orientation="vertical"
         >
-    </LinearLayout>
+    </RelativeLayout>
 
-    <TextView
-        android:id="@+id/id_layoutCenter"
-        android:layout_width="20dp"
-        android:layout_height="30dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        />
+<!--    <TextView-->
+<!--        android:id="@+id/id_layoutCenter"-->
+<!--        android:layout_width="20dp"-->
+<!--        android:layout_height="30dp"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        />-->
 
     <RelativeLayout
         android:id="@+id/id_goTo_CoronaInfoActivity"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="43dp"
-        android:layout_toStartOf="@+id/id_layoutCenter"
         android:layout_marginStart="10dp"
-        android:layout_marginEnd="5dp"
         android:layout_marginBottom="5dp"
         android:layout_marginTop="5dp"
         android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
         android:background="@drawable/button_bg_white"
+        android:paddingRight="20dp"
         >
         <ImageView
             android:id="@+id/id_infoIcon"
@@ -633,48 +632,48 @@
             android:layout_marginStart="5dp"
             />
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Covid Info"
             android:textColor="@color/colorBlue"
             android:textStyle="bold"
             android:textAllCaps="false"
             android:layout_toEndOf="@+id/id_infoIcon"
-            android:layout_marginStart="5dp"
+            android:layout_marginStart="1dp"
             android:layout_centerVertical="true"
             />
     </RelativeLayout>
-    <RelativeLayout
-        android:id="@+id/id_selfAssessBTN"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="5dp"
-        android:layout_marginTop="5dp"
-        android:layout_toEndOf="@id/id_layoutCenter"
-        android:background="@drawable/button_bg_blue"
-        android:layout_alignParentBottom="true"
-        >
-        <ImageView
-            android:id="@+id/id_selfAssessIcon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_centerVertical="true"
-            android:background="@drawable/icons_hospital_48"
-            android:layout_marginStart="10dp"
-            />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Self Assess"
-            android:textAllCaps="false"
-            android:textColor="#ffffff"
-            android:layout_toEndOf="@+id/id_selfAssessIcon"
-            android:layout_marginStart="7dp"
-            android:layout_centerVertical="true"
-            />
-    </RelativeLayout>
+<!--    <RelativeLayout-->
+<!--        android:id="@+id/id_selfAssessBTN"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="44dp"-->
+<!--        android:layout_marginStart="5dp"-->
+<!--        android:layout_marginEnd="10dp"-->
+<!--        android:layout_marginBottom="5dp"-->
+<!--        android:layout_marginTop="5dp"-->
+<!--        android:layout_toEndOf="@id/id_layoutCenter"-->
+<!--        android:background="@drawable/button_bg_blue"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        >-->
+<!--        <ImageView-->
+<!--            android:id="@+id/id_selfAssessIcon"-->
+<!--            android:layout_width="30dp"-->
+<!--            android:layout_height="30dp"-->
+<!--            android:layout_centerVertical="true"-->
+<!--            android:background="@drawable/icons_hospital_48"-->
+<!--            android:layout_marginStart="10dp"-->
+<!--            />-->
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Self Assess"-->
+<!--            android:textAllCaps="false"-->
+<!--            android:textColor="#ffffff"-->
+<!--            android:layout_toEndOf="@+id/id_selfAssessIcon"-->
+<!--            android:layout_marginStart="7dp"-->
+<!--            android:layout_centerVertical="true"-->
+<!--            />-->
+<!--    </RelativeLayout>-->
 
 </RelativeLayout>
 

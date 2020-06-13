@@ -1,10 +1,14 @@
 package com.example.ctssd.Activities;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +33,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Calendar;
+import java.util.List;
 
 public class OtpActivity extends AppCompatActivity {
 
@@ -98,17 +103,17 @@ public class OtpActivity extends AppCompatActivity {
                             editor.putInt("startingHour", c1.get(Calendar.HOUR_OF_DAY));
                             editor.putInt("startingMinute", c1.get(Calendar.MINUTE));
                             editor.apply();
-                            getUniqueIdOfUser(getIntent().getStringExtra("myPhoneNumber"));
-                            // ...
+
+                            addAutoStartup();
                         } else {
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
                                 // The verification code entered was invalid
                                 mOtpFeedback.setVisibility(View.VISIBLE);
                                 mOtpFeedback.setText("Some error occured please try again.");
+                                mOtpProgress.setVisibility(View.INVISIBLE);
+                                mVerifyBtn.setEnabled(true);
                             }
                         }
-                        mOtpProgress.setVisibility(View.INVISIBLE);
-                        mVerifyBtn.setEnabled(true);
                     }
                 });
     }
@@ -147,6 +152,8 @@ public class OtpActivity extends AppCompatActivity {
                                                 edit.putString("myDeviceId", String.valueOf(counter+1));
                                                 edit.apply();
                                                 db.setValue(counter+1);
+                                                mOtpProgress.setVisibility(View.INVISIBLE);
+                                                mVerifyBtn.setEnabled(true);
                                                 sendUserToHome();
                                             }
                                             else
@@ -156,6 +163,8 @@ public class OtpActivity extends AppCompatActivity {
                                                 edit.putString("myDeviceId", String.valueOf(dataSnapshot.getValue(Integer.class)));
                                                 edit.apply();
                                                 Log.i("Register", "dataSnapshot exists");
+                                                mOtpProgress.setVisibility(View.INVISIBLE);
+                                                mVerifyBtn.setEnabled(true);
                                                 sendUserToHome();
                                             }
                                         }
@@ -170,6 +179,48 @@ public class OtpActivity extends AppCompatActivity {
                     public void onCancelled(@NonNull DatabaseError databaseError) { }
                 }
         );
+    }
+
+    private void addAutoStartup() {
+
+        try {
+            Intent intent = new Intent();
+            String manufacturer = android.os.Build.MANUFACTURER;
+            if ("xiaomi".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
+            } else if ("oppo".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
+            } else if ("vivo".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
+            } else if ("Letv".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
+            } else if ("Honor".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"));
+            }
+
+            List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            if  (list.size() > 0) {
+                startActivityForResult(intent, 53);
+            }
+            else
+            {
+                getUniqueIdOfUser(getIntent().getStringExtra("myPhoneNumber"));
+            }
+        } catch (Exception e) {
+            Log.e("exc" , String.valueOf(e));
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.i("OTP", "Inside on activity result");
+        if(requestCode==53)
+        {
+            Log.i("OTP", "Returned from autoStart");
+            getUniqueIdOfUser(getIntent().getStringExtra("myPhoneNumber"));
+        }
     }
 
     private void sendUserToHome()

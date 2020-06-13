@@ -80,9 +80,12 @@ public class GetLocation
             LocationRequest mLocationRequest = new LocationRequest();
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             //mLocationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
-            mLocationRequest.setInterval(15000);  //TODO
-            mLocationRequest.setFastestInterval(5000);
-            //mLocationRequest.setNumUpdates(1);  //TODO
+            mLocationRequest.setInterval(15000);
+            mLocationRequest.setFastestInterval(15000);
+            //mLocationRequest.setSmallestDisplacement(20);
+            //mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
+            //mLocationRequest.setNumUpdates(1);
+
             Log.i("LocationLooper", "looper");
             fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(mContext));
             fusedLocationProviderClient.requestLocationUpdates(
@@ -116,57 +119,6 @@ public class GetLocation
         intent1.putExtra("latitude",location.getLatitude());
         intent1.putExtra("longitude", location.getLatitude());
         mContext.sendBroadcast(intent1);
-
-        try {
-            Geocoder geocoder = new Geocoder(mContext,
-                    Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(
-                    location.getLatitude(), location.getLongitude(),
-                    1
-            );
-
-            final String cityName = addresses.get(0).getLocality();
-
-            if(cityName==null)
-            {
-                Intent intent = new Intent("ENABLE_GPS");
-                mContext.sendBroadcast(intent);
-                return;
-            }
-            final String area = addresses.get(0).getAdminArea();
-
-            // check if any of this is in hotspot list
-            DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference().child("hotspots");
-            dataRef.child("lists").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot)
-                {
-                    int zoneVar = 0;
-                    if(dataSnapshot.exists())
-                    {
-                        String red = dataSnapshot.child("red").getValue(String.class);
-                        String orange = dataSnapshot.child("orange").getValue(String.class);
-                        if(red!=null && (red.contains(cityName) || red.contains(area)))
-                        {
-                            zoneVar = 2;
-                        }
-                        else if(orange!=null && (orange.contains(cityName) || orange.contains(area)))
-                        {
-                            zoneVar = 1;
-                        }
-                    }
-                    Intent intent = new Intent("LOCATION_FOUND");
-                    intent.putExtra("zoneVar", zoneVar);
-                    intent.putExtra("cityName", cityName);
-                    mContext.sendBroadcast(intent);
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) { }
-            });
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-        }
     }
 
     private boolean isLocationEnabled_Network() {

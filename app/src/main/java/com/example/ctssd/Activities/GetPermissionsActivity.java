@@ -4,20 +4,34 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.example.ctssd.R;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.List;
+import java.util.Objects;
 
 public class GetPermissionsActivity extends AppCompatActivity {
 
@@ -49,38 +63,6 @@ public class GetPermissionsActivity extends AppCompatActivity {
 
         getPermissions();
 
-    }
-
-    private void addAutoStartup() {
-
-        try {
-            Intent intent = new Intent();
-            String manufacturer = android.os.Build.MANUFACTURER;
-            if ("xiaomi".equalsIgnoreCase(manufacturer)) {
-                intent.setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
-            } else if ("oppo".equalsIgnoreCase(manufacturer)) {
-                intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
-            } else if ("vivo".equalsIgnoreCase(manufacturer)) {
-                intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
-            } else if ("Letv".equalsIgnoreCase(manufacturer)) {
-                intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
-            } else if ("Honor".equalsIgnoreCase(manufacturer)) {
-                intent.setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"));
-            }
-
-            List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            if  (list.size() > 0) {
-                startActivityForResult(intent, 53);
-            }
-            else
-            {
-                Intent intent23 = new Intent(GetPermissionsActivity.this, Main2Activity.class);
-                startActivity(intent23);
-                finish();
-            }
-        } catch (Exception e) {
-            Log.e("exc" , String.valueOf(e));
-        }
     }
 
     private void setupBluetooth() {
@@ -125,12 +107,32 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 break;
 
             case 45:
-                // TODO: testing
-                //addAutoStartup(); // This should happen 1 time only.
-                //Log.i(TAG, "We returned from autostart.");
-                Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
-                startActivity(intent);
-                finish();
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                    enableGPS();
+                else
+                {
+                    Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                    startActivity(intent);
+                    finish();
+                }
+                break;
+
+            case LocationRequest.PRIORITY_HIGH_ACCURACY:
+                switch (resultCode)
+                {
+                    case Activity.RESULT_OK:
+                        Log.i(TAG, "Got it : GPS Enabled by user");
+                        Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                        startActivity(intent);
+                        finish();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Log.i(TAG, "Cancelled : User rejected GPS request");
+                        break;
+                    default:
+                        break;
+                }
                 break;
         }
     }
@@ -162,7 +164,52 @@ public class GetPermissionsActivity extends AppCompatActivity {
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
             }, 43);
         }
+    }
+
+    private void enableGPS()
+    {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        Task<LocationSettingsResponse> result =
+                LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
+
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                } catch (ApiException exception) {
+                    switch (exception.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            // Location settings are not satisfied. But could be fixed by showing the
+                            // user a dialog.
+                            try {
+                                // Cast to a resolvable exception.
+                                ResolvableApiException resolvable = (ResolvableApiException) exception;
+                                // Show the dialog by calling startResolutionForResult(),
+                                // and check the result in onActivityResult().
+                                resolvable.startResolutionForResult(
+                                        GetPermissionsActivity.this,
+                                        LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+                            } catch (IntentSender.SendIntentException e) {
+                                // Ignore the error.
+                            } catch (ClassCastException e) {
+                                // Ignore, should be an impossible error.
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            // Location settings are not satisfied. However, we have no way to fix the
+                            // settings so we won't show the dialog.
+                            break;
+                    }
+                }
+            }
+        });
     }
 }

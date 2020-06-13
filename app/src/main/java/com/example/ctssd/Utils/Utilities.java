@@ -99,6 +99,7 @@ public class Utilities
         editor.apply();
 
         float BTOnTime = settings.getFloat("totalBTOnTime", 0);
+        int preMaxRFC = settings.getInt("maxRiskFromContacts", 0);
 
         SharedPreferences.Editor ed = settings.edit();
         // update number of days since installation.
@@ -109,6 +110,12 @@ public class Utilities
         ed.putInt("contactsTodayPenalty", 0);
         ed.putInt("maxRiskFromContacts", 0);
         ed.putInt("bluetoothPenalty", 0);
+        ed.putInt("myRiskIndex", 0);
+        ed.putInt("fromContactsRiskMax", 0);
+        ed.putInt("fromContactsToday", 0);
+        ed.putInt("fromBluetoothOffTime", 0);
+        ed.putInt("fromCrowdInstances", 0);
+        ed.putInt("bluetoothPenalty",0);
         ed.apply();
 
         myDb = new DatabaseHelper(context);
@@ -123,7 +130,7 @@ public class Utilities
         }
         while(cursor!=null && cursor.moveToNext())
         {
-            myDb.insertDataTable3(lastDay, lastMonth, lastYear, cursor.getString(0), cursor.getString(1));
+            myDb.insertDataTable3(lastDay, lastMonth, lastYear, cursor.getString(0), cursor.getString(1), cursor.getString(3));
         }
         Objects.requireNonNull(cursor).close();
         myDb.deleteAllRecords();  //delete all records from table1
@@ -175,17 +182,24 @@ public class Utilities
 
     public void uploadDataToCloud(Context context)
     {
+        SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
+        String deviceId = settings.getString("myDeviceId", "NA");
+
         myDb = new DatabaseHelper(context);
 
         Cursor cursor = myDb.getAllDataTable3();
 
-        DatabaseReference databaseReference = database.getReference("Users"+"/"+ Main2Activity.myPhoneNumber);
+        DatabaseReference databaseReference = database.getReference("Users"+"/"+ deviceId);
         while(cursor!=null && cursor.moveToNext())
         {
             databaseReference.child(String.valueOf(cursor.getInt(3)))
                     .child(String.valueOf(cursor.getInt(2)))
                     .child(String.valueOf(cursor.getInt(1)))
-                    .child(cursor.getString(4)).setValue(cursor.getString(5));
+                    .child(cursor.getString(4)).child("Time").setValue(cursor.getString(5));
+            databaseReference.child(String.valueOf(cursor.getInt(3)))
+                    .child(String.valueOf(cursor.getInt(2)))
+                    .child(String.valueOf(cursor.getInt(1)))
+                    .child(cursor.getString(4)).child("Location").setValue(cursor.getString(5));
         }
         Log.i(TAG, "Data uploaded to cloud");
         delete15DayOldCloud();
@@ -246,39 +260,89 @@ public class Utilities
         builder.show();
     }
 
-    public void sendNotification(Context context, String title, String text)
+    private void createANotificationChannel(Context context)
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            CharSequence name = "temp";
-            String description = "descr";
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    "statsUpdate",
+                    "Foreground Service Channel",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
+    }
+
+    public void sendStatsUpdateNotification(Context context, int riskFactor, int contactsToday)
+    {
+        createANotificationChannel(context);
+        Intent notificationIntent = new Intent(context, Main2Activity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context,
+                112, notificationIntent, 0);
+
+        RemoteViews contentView = new RemoteViews(context.getPackageName(), R.layout.stats_notif_layout);
+        contentView.setTextViewText(R.id.id_notif_riskFactor, String.valueOf(riskFactor)+"%");
+        contentView.setTextViewText(R.id.id_notif_contactsToday, String.valueOf(contactsToday));
+
+        Notification notification = new NotificationCompat.Builder(context, "statsUpdate")
+                //.setContentTitle("Covid Tracer")
+                .setSmallIcon(R.drawable.ic_transfer_within_a_station_black_24dp)
+                .setTicker("Stats")
+                .setContentIntent(pendingIntent)
+                .setContent(contentView)
+                //.setStyle(new NotificationCompat.BigTextStyle().bigText("App is running in background.\n"))
+                //.setSmallIcon(R.drawable.icon_state)
+                //.setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .build();
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        notificationManager.notify(112, notification);
+    }
+
+    public void sendNotification(Context context, String title, String text, int notifId, String channelId)
+    {
+        Log.i("Utilities", "Inside send notification");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            CharSequence name = "locUpdate";
+            String description = "updates of loc";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel("123", name, importance);
+            NotificationChannel channel = new NotificationChannel(channelId, name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+        Intent activityIntent = new Intent(context, Main2Activity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(context,
+                notifId, activityIntent, 0);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "123")
-                .setSmallIcon(R.drawable.icon_info_48)
+        Notification notification = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.ic_phone_android_black_24dp)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setColor(Color.BLUE)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(true)
+                .build();
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(123, builder.build());
+        notificationManager.notify(notifId, notification);
     }
 
     public void sendNotifToTurnOnBT(Context context)
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            CharSequence name = "efe";
-            String description = "For turning on cdc";
+            CharSequence name = "Bluetooth";
+            String description = "For turning on bluetooth";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel("channel1", name, importance);
+            NotificationChannel channel = new NotificationChannel("bluetoothC", name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
@@ -287,10 +351,10 @@ public class Utilities
         PendingIntent contentIntent = PendingIntent.getActivity(context,
                 0, activityIntent, 0);
 
-        Notification notification = new NotificationCompat.Builder(context, "channel1")
-                .setSmallIcon(R.drawable.icon_info_48)
+        Notification notification = new NotificationCompat.Builder(context, "bluetoothC")
+                .setSmallIcon(R.drawable.ic_bluetooth_black_24dp)
                 .setContentTitle("Your Bluetooth is off.")
-                .setContentText("Please turn on bluetoth for your own safety.")
+                .setContentText("Please turn on bluetooth for your own safety.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setColor(Color.BLUE)

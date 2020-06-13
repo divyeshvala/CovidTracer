@@ -11,11 +11,9 @@ import java.util.Objects;
 public class DatabaseHelper extends SQLiteOpenHelper
 {
     private static final String DATABASE = "Database.db";
-    private static final String TABLE0 = "table0";
     private static final String TABLE1 = "table1";
     private static final String TABLE2 = "table2";
     private static final String TABLE3 = "table3";
-    private static final String TABLE4 = "table4";
 
     public DatabaseHelper(Context context)
     {
@@ -25,47 +23,23 @@ public class DatabaseHelper extends SQLiteOpenHelper
     @Override
     public void onCreate(SQLiteDatabase db)
     {
-        String table0 = "CREATE TABLE "+ TABLE0 + "(PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER)";
         String table1 = "CREATE TABLE "+ TABLE1 + "(PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER, LOCATION TEXT)";
         String table2 = "CREATE TABLE "+ TABLE2 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, count INTEGER, RISK INTEGER, BTON FLOAT)";
-        String table4 = "CREATE TABLE "+ TABLE4 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, DATE TEXT, TIME TEXT, LOC TEXT)";
-        String table3 = "CREATE TABLE "+ TABLE3 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, DAY INTEGER, MONTH INTEGER, YEAR INTEGER, PHONE TEXT, TIME TEXT)";
+        String table3 = "CREATE TABLE "+ TABLE3 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, DAY INTEGER, MONTH INTEGER, YEAR INTEGER, PHONE TEXT, TIME TEXT, LOCATION TEXT)";
 
-        db.execSQL(table0);
         db.execSQL(table1);
         db.execSQL(table2);
         db.execSQL(table3);
-        db.execSQL(table4);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
-        db.execSQL("DROP TABLE IF EXISTS "+TABLE0);
         db.execSQL("DROP TABLE IF EXISTS "+TABLE1);
         db.execSQL("DROP TABLE IF EXISTS "+TABLE2);
         db.execSQL("DROP TABLE IF EXISTS "+TABLE3);
-        db.execSQL("DROP TABLE IF EXISTS "+TABLE4);
         onCreate(db);
     }
-
-    public void insertDataTable0(String phone, String time, int riskIndex)
-    {
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("PHONE", phone);
-        contentValues.put("TIME", time);
-        contentValues.put("RISK", riskIndex);
-        db.insertWithOnConflict("table0", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
-    }
-
-    public void deleteAllRecordsTable0()
-    {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("delete from table0");
-    }
-
 
     public void insertData(String phone, String time, int riskIndex, String location)
     {
@@ -79,25 +53,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
         db.insertWithOnConflict("table1", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
     }
 
-    public int getRiskOfContact(String phone)
-    {
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        Cursor cursor = db.rawQuery("select * from table1", null);
-
-        while(cursor!=null && cursor.moveToNext())
-        {
-            if(cursor.getString(0).equals(phone))
-            {
-                int i = cursor.getInt(2);
-                cursor.close();
-                return i;
-            }
-        }
-        Objects.requireNonNull(cursor).close();
-        return -1;
-    }
-
     public void insertDataTable2(int count, int risk, float BTonTime)
     {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -107,10 +62,9 @@ public class DatabaseHelper extends SQLiteOpenHelper
         contentValues.put("risk", risk);
         contentValues.put("BTON", BTonTime);
         db.insertWithOnConflict("table2", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
-
     }
 
-    public void insertDataTable3(int day, int month, int year, String phone, String time)
+    public void insertDataTable3(int day, int month, int year, String phone, String time, String location)
     {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -120,18 +74,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
         contentValues.put("YEAR", year);
         contentValues.put("PHONE", phone);
         contentValues.put("TIME", time);
+        contentValues.put("LOCATION", location);
         db.insert("table3", null, contentValues);
-    }
-
-    public void insertDataTable4(String date, String time, String location)
-    {
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("DATE", date);
-        contentValues.put("TIME", time);
-        contentValues.put("LOC", location);
-        db.insert("table4", null, contentValues);
     }
 
     public void deleteAllRecords()
