@@ -1,5 +1,6 @@
 package com.example.ctssd.Utils;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -16,28 +17,25 @@ import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.example.ctssd.Activities.Fragments.Tab2;
-import com.example.ctssd.Activities.GetPermissionsActivity;
 import com.example.ctssd.Activities.Main2Activity;
+import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
+import com.example.ctssd.Services.Alarm;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
 public class Utilities
 {
@@ -48,6 +46,7 @@ public class Utilities
 
     private final String key = "aesEncryptionKey";
     private final String initVector = "encryptionIntVec";
+    private Alarm alarm = new Alarm();
 
     public boolean isTwentyFourHoursOver(Context context)
     {
@@ -152,6 +151,21 @@ public class Utilities
         Log.i(TAG, "Records in table2 :"+countTable2);
 
         delete15DayOldDataFromTable3();   // Delete 15 days old data from table3
+
+        // Code to restart the activity after the completion of 24 hours
+
+        Intent mStartActivity = new Intent(context, MainActivity.class);
+
+        int mPendingIntentId = 123456;
+
+        PendingIntent mPendingIntent = PendingIntent.getActivity(context, mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + 1000, mPendingIntent);
+
+        System.exit(0);
+
     }
 
     private void delete15DayOldDataFromTable3()
