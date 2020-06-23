@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -43,7 +44,6 @@ public class Tab1 extends Fragment {
     private static final String ARG_PARAM2 = "param2";
 
     private Adapter adapter;
-    public static int serialNo = 1;
     private static ArrayList<UserObject> list = new ArrayList<>();
     private static HashMap<String, DeviceDetailsObject> map = new HashMap<>();
 
@@ -51,6 +51,8 @@ public class Tab1 extends Fragment {
     private String mParam2;
 
     private OnFragmentInteractionListener mListener;
+    private TextView tempCounter;
+    private int deviceCounter = 0;
 
     public Tab1() {
     }
@@ -94,6 +96,8 @@ public class Tab1 extends Fragment {
 //            }
 //        });
 
+        tempCounter = root.findViewById(R.id.id_temp_count);
+
         RecyclerView recyclerView = root.findViewById(R.id.id_home_recyclerView);
         recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setHasFixedSize(false);
@@ -120,6 +124,9 @@ public class Tab1 extends Fragment {
             String action = intent.getAction();
             if(action!=null && action.equals("ACTION_update_list"))
             {
+                deviceCounter++;
+                tempCounter.setText(String.valueOf(deviceCounter));
+
                 Log.i("Tab1 receiver", "updateListReceiver");
                 String phone = intent.getStringExtra("phone");
                 String distance = intent.getStringExtra("distance");

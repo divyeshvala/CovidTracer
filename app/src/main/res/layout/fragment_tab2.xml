@@ -8,12 +8,7 @@
     android:background="#ffffff"
     >
 
-<!--    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout-->
-<!--        android:id="@+id/swipeRefresh"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        >-->
-        <ScrollView
+    <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentStart="true"
@@ -589,11 +584,9 @@
             </TableLayout>
         </ScrollView>
 
-<!--    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
-
     <RelativeLayout
         android:id="@+id/id_bottomLayout"
-        android:layout_width="130dp"
+        android:layout_width="140dp"
         android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:baselineAligned="false"
@@ -602,14 +595,6 @@
         android:orientation="vertical"
         >
     </RelativeLayout>
-
-<!--    <TextView-->
-<!--        android:id="@+id/id_layoutCenter"-->
-<!--        android:layout_width="20dp"-->
-<!--        android:layout_height="30dp"-->
-<!--        android:layout_alignParentBottom="true"-->
-<!--        android:layout_centerHorizontal="true"-->
-<!--        />-->
 
     <RelativeLayout
         android:id="@+id/id_goTo_CoronaInfoActivity"
@@ -643,115 +628,6 @@
             android:layout_centerVertical="true"
             />
     </RelativeLayout>
-<!--    <RelativeLayout-->
-<!--        android:id="@+id/id_selfAssessBTN"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="44dp"-->
-<!--        android:layout_marginStart="5dp"-->
-<!--        android:layout_marginEnd="10dp"-->
-<!--        android:layout_marginBottom="5dp"-->
-<!--        android:layout_marginTop="5dp"-->
-<!--        android:layout_toEndOf="@id/id_layoutCenter"-->
-<!--        android:background="@drawable/button_bg_blue"-->
-<!--        android:layout_alignParentBottom="true"-->
-<!--        >-->
-<!--        <ImageView-->
-<!--            android:id="@+id/id_selfAssessIcon"-->
-<!--            android:layout_width="30dp"-->
-<!--            android:layout_height="30dp"-->
-<!--            android:layout_centerVertical="true"-->
-<!--            android:background="@drawable/icons_hospital_48"-->
-<!--            android:layout_marginStart="10dp"-->
-<!--            />-->
-<!--        <TextView-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="Self Assess"-->
-<!--            android:textAllCaps="false"-->
-<!--            android:textColor="#ffffff"-->
-<!--            android:layout_toEndOf="@+id/id_selfAssessIcon"-->
-<!--            android:layout_marginStart="7dp"-->
-<!--            android:layout_centerVertical="true"-->
-<!--            />-->
-<!--    </RelativeLayout>-->
 
 </RelativeLayout>
 
-<!--<RelativeLayout-->
-<!--android:layout_width="match_parent"-->
-<!--android:layout_height="110dp"-->
-<!--android:layout_marginTop="@dimen/card_topMargin"-->
-<!--android:layout_marginEnd="@dimen/card_sideMargin"-->
-<!--android:layout_marginStart="@dimen/card_sideMargin"-->
-<!--android:background="@drawable/card_background_white"-->
-<!--    >-->
-
-<!--<ImageView-->
-<!--    android:id="@+id/id_locationIcon"-->
-<!--    android:layout_width="40dp"-->
-<!--    android:layout_height="40dp"-->
-<!--    android:background="@drawable/icon_location"-->
-<!--    android:layout_centerVertical="true"-->
-<!--    android:layout_marginStart="20dp"-->
-<!--    android:contentDescription="Location icon"-->
-<!--    />-->
-
-<!--<TextView-->
-<!--    android:id="@+id/id_locationTitle"-->
-<!--    android:layout_width="match_parent"-->
-<!--    android:layout_height="wrap_content"-->
-<!--    android:text="Location"-->
-<!--    android:textSize="18sp"-->
-<!--    android:textAlignment="center"-->
-<!--    android:layout_above="@id/id_locationCenter"-->
-<!--    android:textStyle="bold"-->
-<!--    android:textColor="@color/colorStatsText"-->
-<!--    />-->
-
-<!--<TextView-->
-<!--    android:id="@+id/id_locationCenter"-->
-<!--    android:layout_width="50dp"-->
-<!--    android:layout_height="10dp"-->
-<!--    android:layout_centerInParent="true"-->
-<!--    />-->
-
-<!--<TextView-->
-<!--    android:id="@+id/id_locationStat"-->
-<!--    android:layout_width="wrap_content"-->
-<!--    android:layout_height="wrap_content"-->
-<!--    android:layout_below="@id/id_locationTitle"-->
-<!--    android:layout_centerHorizontal="true"-->
-<!--    android:text=""-->
-<!--    android:textColor="#43A047"-->
-<!--    android:textSize="16sp" />-->
-
-<!--<ProgressBar-->
-<!--    android:id="@+id/locationStat_progress_bar"-->
-<!--    style="?android:attr/progressBarStyle"-->
-<!--    android:layout_width="35dp"-->
-<!--    android:layout_height="35dp"-->
-<!--    android:visibility="visible"-->
-<!--    android:layout_centerInParent="true"-->
-<!--    android:layout_below="@id/id_locationTitle"-->
-<!--    />-->
-
-<!--<TextView-->
-<!--    android:id="@+id/id_zoneColor"-->
-<!--    android:layout_below="@+id/id_locationStat"-->
-<!--    android:layout_centerHorizontal="true"-->
-<!--    android:layout_width="wrap_content"-->
-<!--    android:layout_height="wrap_content"-->
-<!--    android:text=""-->
-<!--    android:textColor="@color/colorStatsSubText"-->
-<!--    android:textSize="16sp" />-->
-<!--<ImageView-->
-<!--    android:id="@+id/id_locationInfo"-->
-<!--    android:layout_width="20dp"-->
-<!--    android:layout_height="20dp"-->
-<!--    android:layout_centerVertical="true"-->
-<!--    android:layout_alignParentEnd="true"-->
-<!--    android:background="@drawable/icon_info_small"-->
-<!--    android:contentDescription="Info"-->
-<!--    android:layout_marginEnd="10dp"-->
-<!--    />-->
-<!--</RelativeLayout>-->
