@@ -132,6 +132,7 @@ public class Tab1 extends Fragment {
                 String distance = intent.getStringExtra("distance");
                 int riskIndex = intent.getIntExtra("riskIndex", 0);
 
+               // System.out.println(phone +" is connected");
                 for(UserObject object : list)
                 {
                     if(object.getPhone().equals(phone))

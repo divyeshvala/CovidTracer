@@ -1,5 +1,6 @@
 package com.example.ctssd.Utils;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -16,13 +17,16 @@ import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.RemoteViews;
+
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import com.example.ctssd.Activities.Main2Activity;
+import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.Services.Alarm;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -147,7 +151,10 @@ public class Utilities
         }
         Log.i(TAG, "Records in table2 :"+countTable2);
 
-        delete15DayOldDataFromTable3();   // Delete 15 days old data from table3
+        delete15DayOldDataFromTable3();   // Delete 15 days old data from table
+
+        System.exit(0);
+
     }
 
     private void delete15DayOldDataFromTable3()
