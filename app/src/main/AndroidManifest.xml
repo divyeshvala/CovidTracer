@@ -23,8 +23,6 @@
             android:enabled="true"
             android:exported="true"></receiver>
 
-        <activity android:name=".Activities.TempActivity" />
-        <activity android:name=".Activities.SelfAssessmentReport" />
         <activity android:name=".Activities.GetPermissionsActivity" />
         <activity android:name=".Activities.CoronaInfoActivity" />
         <activity

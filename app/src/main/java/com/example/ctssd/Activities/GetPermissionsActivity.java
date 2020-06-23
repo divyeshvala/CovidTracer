@@ -6,16 +6,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -30,9 +29,6 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import java.util.List;
-import java.util.Objects;
-
 public class GetPermissionsActivity extends AppCompatActivity {
 
     private static final String TAG = "GetPermissionsActivity";
@@ -40,7 +36,9 @@ public class GetPermissionsActivity extends AppCompatActivity {
     private static final String AppId = "c1t2";
     private int requestBTCount=0, requestPermFirstCount = 0;
     private int riskIndex;
-    private String myPhoneNumber;
+    //private String myPhoneNumber;
+
+    private boolean isUserActive;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -50,9 +48,11 @@ public class GetPermissionsActivity extends AppCompatActivity {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        myPhoneNumber = settings.getString("myDeviceId", "NA");
+        //myPhoneNumber = settings.getString("myDeviceId", "NA");
         riskIndex = settings.getInt("myRiskIndex", 0);
         Log.i(TAG, "RiskIndex from shared preferences :"+riskIndex);
+
+        isUserActive = false;
 
         /* from here flow will be as follows
          * 1. call getPermissions()
@@ -62,7 +62,6 @@ public class GetPermissionsActivity extends AppCompatActivity {
          */
 
         getPermissions();
-
     }
 
     private void setupBluetooth() {
@@ -75,16 +74,37 @@ public class GetPermissionsActivity extends AppCompatActivity {
             requestBTCount++;
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 41);
+
+            setTimerToCheckIfUserIsActive();
         }
         else if(bluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
-            bluetoothAdapter.setName(AppId+myPhoneNumber+"_"+riskIndex);
-            Log.i(TAG, "Your device name :"+AppId+myPhoneNumber+"_"+riskIndex);
+            //bluetoothAdapter.setName(AppId+myPhoneNumber+"_"+riskIndex);
+            //Log.i(TAG, "Your device name :"+AppId+myPhoneNumber+"_"+riskIndex);
 
             // For making device discoverable.
             Intent dIntent =  new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
             dIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3600);
             startActivityForResult(dIntent, 45);
+
+            setTimerToCheckIfUserIsActive();
         }
+    }
+
+    private void setTimerToCheckIfUserIsActive()
+    {
+        isUserActive = false;
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run()
+            {
+                if(!isUserActive)
+                {
+                    Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                    startActivity(intent);
+                    finish();
+                }
+            }
+        }, 15000);
     }
 
     @Override
@@ -95,6 +115,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
         {
             case 41:
                 // check if bluetooth is on.
+                isUserActive = true;
                 if(bluetoothAdapter.isEnabled())
                 {
                     setupBluetooth();
@@ -107,6 +128,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 break;
 
             case 45:
+                isUserActive = true;
                 LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                     enableGPS();
@@ -119,6 +141,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 break;
 
             case LocationRequest.PRIORITY_HIGH_ACCURACY:
+                isUserActive = true;
                 switch (resultCode)
                 {
                     case Activity.RESULT_OK:
@@ -143,6 +166,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
         switch (requestCode)
         {
             case 43:
+                isUserActive = true;
                 if (grantResults.length > 2 && grantResults[2] == PackageManager.PERMISSION_GRANTED)
                 {
                     Log.i(TAG, "Permission 1 granted");
@@ -167,6 +191,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_FINE_LOCATION
             }, 43);
         }
+        setTimerToCheckIfUserIsActive();
     }
 
     private void enableGPS()
@@ -211,5 +236,6 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 }
             }
         });
+        setTimerToCheckIfUserIsActive();
     }
 }

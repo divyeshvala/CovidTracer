@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
@@ -19,11 +20,16 @@ import com.example.ctssd.Activities.Fragments.Tab2;
 import com.example.ctssd.Activities.Fragments.Tab3;
 import com.example.ctssd.R;
 import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentInteractionListener, Tab2.OnFragmentInteractionListener, Tab3.OnFragmentInteractionListener {
 
     public static String myMacAdd = "-1";
-    public static String myPhoneNumber;
+    public static String myDeviceId;
     private TabLayout tabLayout;
     private PagerAdapter adapter;
 
@@ -33,19 +39,43 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-        SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        myPhoneNumber = settings.getString("myDeviceId", "NA");
+        final SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        myDeviceId = settings.getString("myDeviceId", "NA");
 
-        if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
+        if(myDeviceId.equals("NA"))
         {
-            Intent intent = new Intent(BluetoothAdapter.ACTION_STATE_CHANGED);
-            sendBroadcast(intent);
+            String phone = settings.getString("myPhoneNumber", "NA");
+            final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference().child("Ids").child(phone);
+            dbRef.addListenerForSingleValueEvent(new ValueEventListener()
+            {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                {
+                    myDeviceId = String.valueOf(dataSnapshot.getValue(Integer.class));
+                    SharedPreferences.Editor edit = settings.edit();
+                    edit.putString("myDeviceId", myDeviceId);
+                    edit.apply();
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
         }
+
+        Log.i("Main2Activity", "myDID :"+myDeviceId);
+
+        // todo
+//        if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
+//        {
+//            Intent intent = new Intent(BluetoothAdapter.ACTION_STATE_CHANGED);
+//            sendBroadcast(intent);
+//        }
 
         //startService(new Intent(this, BackgroundLocationService.class));
 
-        IntentFilter intentFilter3 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(turnOnBluetooth, intentFilter3);
+//        IntentFilter intentFilter3 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+//        registerReceiver(turnOnBluetooth, intentFilter3);
 
         tabLayout = (TabLayout)findViewById(R.id.tabLayout);
         tabLayout.addTab(tabLayout.newTab());
@@ -140,10 +170,10 @@ public class Main2Activity extends AppCompatActivity implements Tab1.OnFragmentI
     @Override
     public void onDestroy() {
         super.onDestroy();
-        try {
-            unregisterReceiver(turnOnBluetooth);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+//        try {
+//            unregisterReceiver(turnOnBluetooth);
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
     }
 }

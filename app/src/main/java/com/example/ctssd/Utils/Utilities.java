@@ -16,28 +16,20 @@ import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
-
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-
-import com.example.ctssd.Activities.Fragments.Tab2;
-import com.example.ctssd.Activities.GetPermissionsActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.R;
+import com.example.ctssd.Services.Alarm;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
 public class Utilities
 {
@@ -73,6 +65,10 @@ public class Utilities
                 editor.putInt("month", currentMonth);
                 editor.putInt("year", currentYear);
                 editor.apply();
+
+                // for starting this app automatically next day.
+                Alarm alarm = new Alarm();
+                alarm.setAlarm(context);
             }
             return false;
         }
@@ -199,7 +195,7 @@ public class Utilities
             databaseReference.child(String.valueOf(cursor.getInt(3)))
                     .child(String.valueOf(cursor.getInt(2)))
                     .child(String.valueOf(cursor.getInt(1)))
-                    .child(cursor.getString(4)).child("Location").setValue(cursor.getString(5));
+                    .child(cursor.getString(4)).child("Location").setValue(cursor.getString(6));
         }
         Log.i(TAG, "Data uploaded to cloud");
         delete15DayOldCloud();
@@ -214,7 +210,7 @@ public class Utilities
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
-        database.getReference("Users"+"/"+Main2Activity.myPhoneNumber+"/"+year+"/"+month+"/"+day).removeValue();
+        database.getReference("Users"+"/"+Main2Activity.myDeviceId+"/"+year+"/"+month+"/"+day).removeValue();
     }
 
     public String encryptAES128(String value)

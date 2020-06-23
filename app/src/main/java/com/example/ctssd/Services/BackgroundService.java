@@ -1,6 +1,6 @@
 
 /* This background service will discover all devices
- *  and add them to local storage.
+ * and add them to local storage.
  */
 
 package com.example.ctssd.Services;
@@ -27,6 +27,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
@@ -37,6 +38,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+
+import com.example.ctssd.Activities.GetPermissionsActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.DatabaseHelper;
@@ -141,7 +144,7 @@ public class BackgroundService extends Service {
         super.onCreate();
 
         Log.i(TAG, "Inside onCreate...");
-        Toast.makeText(this, "inside onCreate", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "inside onCreate", Toast.LENGTH_SHORT).show();
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate
@@ -235,13 +238,16 @@ public class BackgroundService extends Service {
         updateNotification();
         setupLocation();
 
-        // TODO: stop service in the night. (alarmManager/ workManager).
-        //alarm.setAlarm(this);
-
         if(!BluetoothAdapter.getDefaultAdapter().isEnabled())
         {
-            Intent intent12 = new Intent(BluetoothAdapter.ACTION_STATE_CHANGED);
-            sendBroadcast(intent12);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run()
+                {
+                    Utilities utilities = new Utilities();
+                    utilities.sendNotifToTurnOnBT(getApplication());
+                }
+            }, 5000);
         }
 
         // Register for broadcasts when a device is discovered.
@@ -286,21 +292,6 @@ public class BackgroundService extends Service {
             locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER, 120000, 20, locationListener);
         }
-
-//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-//            Log.i("LocationTab21", "requestLocUpdates1.1");
-//            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                Log.i("LocationTab21", "requestLocUpdates1.2");
-//                locationManager.requestLocationUpdates(
-//                        LocationManager.GPS_PROVIDER, 5000, 1, locationListener);
-//            }
-//        }
-//        else
-//        {
-//            Log.i("LocationTab21", "requestLocUpdates2");
-//            locationManager.requestLocationUpdates(
-//                    LocationManager.GPS_PROVIDER, 5000, 1, locationListener);
-//        }
     }
 
     @Nullable
@@ -381,7 +372,7 @@ public class BackgroundService extends Service {
                 if(device==null)
                     return;
                 deviceName = device.getName();
-                if(deviceName==null )
+                if(deviceName==null)
                     return;
                 if(deviceName.equals("NA"))
                     return;
@@ -405,6 +396,8 @@ public class BackgroundService extends Service {
                             break;
                     }
                     String phone = deviceName.substring(AppId.length(), i);
+                    if(phone.equals("NA"))
+                        return;
                     int riskIndex = convertToInt(deviceName.substring(i+1));
 
                     SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
@@ -596,6 +589,10 @@ public class BackgroundService extends Service {
         {
             maxRiskIndexVar = riskIndex;
             editor.putInt("maxRiskIndexVar", maxRiskIndexVar);
+
+            if(deviceId.equals("NA"))
+                deviceId = settings.getString("myDeviceId", "NA");
+
             bluetoothAdapter.setName(AppId+deviceId+"_"+maxRiskIndexVar);
             Log.i(TAG, "Your name changed : "+bluetoothAdapter.getName());
         }
@@ -718,7 +715,7 @@ public class BackgroundService extends Service {
     public void onTaskRemoved(Intent rootIntent)
     {
         Log.i("tag", "onTask removed called.");
-        Toast.makeText(getApplicationContext(), "onTask removed called.", Toast.LENGTH_LONG).show();
+        //Toast.makeText(getApplicationContext(), "onTask removed called.", Toast.LENGTH_LONG).show();
         Intent restartServiceTask = new Intent(getApplicationContext(), this.getClass());
         restartServiceTask.setPackage(getPackageName());
         PendingIntent restartPendingIntent = PendingIntent.getService(getApplicationContext(), 12, restartServiceTask, PendingIntent.FLAG_ONE_SHOT);

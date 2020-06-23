@@ -138,13 +138,13 @@ public class RegisterActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                             SharedPreferences.Editor editor = settings.edit();
-                            //editor.putString("myPhoneNumber", complete_phone_number);
                             Calendar c1 = Calendar.getInstance();
                             editor.putInt("startingDay", c1.get(Calendar.DAY_OF_MONTH));
                             editor.putInt("startingMonth", c1.get(Calendar.MONTH));
                             editor.putInt("startingYear", c1.get(Calendar.YEAR));
                             editor.putInt("startingHour", c1.get(Calendar.HOUR_OF_DAY));
                             editor.putInt("startingMinute", c1.get(Calendar.MINUTE));
+                            editor.putString("myPhoneNumber", complete_phone_number);
                             editor.apply();
 
                             addAutoStartup();
