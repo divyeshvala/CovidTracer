@@ -67,8 +67,8 @@ public class Utilities
                 editor.apply();
 
                 // for starting this app automatically next day.
-                Alarm alarm = new Alarm();
-                alarm.setAlarm(context);
+                //Alarm alarm = new Alarm();
+                //alarm.setAlarm(context);
             }
             return false;
         }
@@ -94,24 +94,22 @@ public class Utilities
         editor.putInt("year", currentYear);
         editor.apply();
 
-        float BTOnTime = settings.getFloat("totalBTOnTime", 0);
+        float BTOffTime = settings.getFloat("totalBTOnTime", 0);
         int preMaxRFC = settings.getInt("maxRiskFromContacts", 0);
 
         SharedPreferences.Editor ed = settings.edit();
         // update number of days since installation.
         ed.putInt("totalDays", settings.getInt("totalDays", 1)+1);
-        ed.putFloat("totalBTOnTime", 0);
+        ed.putFloat("totalBTOffTime", 0);
         ed.putInt("crowdNo", 0);
         ed.putInt("crowdInstances", 0);
         ed.putInt("contactsTodayPenalty", 0);
         ed.putInt("maxRiskFromContacts", 0);
-        ed.putInt("bluetoothPenalty", 0);
         ed.putInt("myRiskIndex", 0);
         ed.putInt("fromContactsRiskMax", 0);
         ed.putInt("fromContactsToday", 0);
         ed.putInt("fromBluetoothOffTime", 0);
         ed.putInt("fromCrowdInstances", 0);
-        ed.putInt("bluetoothPenalty",0);
         ed.apply();
 
         myDb = new DatabaseHelper(context);
@@ -132,7 +130,7 @@ public class Utilities
         myDb.deleteAllRecords();  //delete all records from table1
         Log.i(TAG, "Data stored now in table3 : "+countTable1);
 
-        myDb.insertDataTable2(countTable1, preRiskIndex, BTOnTime);
+        myDb.insertDataTable2(countTable1, preRiskIndex, BTOffTime);
         Cursor cursor1 = myDb.getAllDataTable2();
         int countTable2 = 0;
         if(cursor1!=null)
@@ -368,7 +366,7 @@ public class Utilities
     public float getTotalBluetoothOffTime(Context context)
     {
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
-        float totalBTOnTime = settings.getFloat("totalBTOnTime", 0);
+        float totalBTOffTime = settings.getFloat("totalBTOffTime", 0);
 
         Calendar endTime = Calendar.getInstance();
         Calendar c1 = Calendar.getInstance();
@@ -389,8 +387,8 @@ public class Utilities
                 totalHours = temp;
         }
 
-        if(totalHours-totalBTOnTime>0)
-            return (totalHours - totalBTOnTime);
+        if(totalHours-totalBTOffTime>0)
+            return (totalHours - totalBTOffTime);
         return 0;
     }
 
