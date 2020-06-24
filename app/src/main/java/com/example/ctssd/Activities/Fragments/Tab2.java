@@ -25,7 +25,6 @@ import androidx.fragment.app.Fragment;
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.R;
-import com.example.ctssd.Services.Alarm;
 import com.example.ctssd.Services.BackgroundService;
 import com.example.ctssd.Utils.DatabaseHelper;
 import com.example.ctssd.Utils.Utilities;
@@ -45,12 +44,12 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     private OnFragmentInteractionListener mListener;
     private TextView todaysNum;
     private TextView riskIndexText, currentStatus, avgContacts, violationNumText,
-            maxContactsText, maxRiskIndexText, avgRiskIndexText, BTonTimeText,
-            maxBTonTimeText, avgBTonTimeText;
+            maxContactsText, maxRiskIndexText, avgRiskIndexText, BTOffTimeText,
+            maxBTOffTimeText, avgBTOffTimeText;
     private DatabaseHelper myDb;
     private static String currentStatusVar = "null";
     private static int riskIndexVar = -1, past13DaysRiskSum = 0, maxRiskIndexVar = 0, maxContactsVar = 0;
-    private static float BTonTime = 0, maxBTonTime = 0, past13DaysBTonSum = 0;
+    private static float BTOffTime = 0, maxBTOffTime = 0, past13DaysBTOffSum = 0;
     private static double avgNumVar = 0.0;
     private static int contactsTodayVar = 0, past13DaySum = 0, totalDays = 1,
             violationNumVar = 0;
@@ -71,12 +70,11 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         avgRiskIndexText = root.findViewById(R.id.id_avgRiskText);
 
         violationNumText = root.findViewById(R.id.id_violationText);
-        BTonTimeText = root.findViewById(R.id.id_bluetoothText);
-        maxBTonTimeText = root.findViewById(R.id.id_maxBluetoothText);
-        avgBTonTimeText = root.findViewById(R.id.id_avgBluetooth);
+        BTOffTimeText = root.findViewById(R.id.id_bluetoothText);
+        maxBTOffTimeText = root.findViewById(R.id.id_maxBluetoothText);
+        avgBTOffTimeText = root.findViewById(R.id.id_avgBluetooth);
         RelativeLayout CoronaInfoBTN = root.findViewById(R.id.id_goTo_CoronaInfoActivity);
 
-        //ImageView statusInfo = root.findViewById(R.id.id_currentStatusInfo);
         ImageView numbersInfo = root.findViewById(R.id.id_contactsTodayInfo);
         ImageView riskIndexInfo = root.findViewById(R.id.id_riskIndexInfo);
         ImageView violationInfo = root.findViewById(R.id.id_violationInfo);
@@ -104,8 +102,8 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             riskIndexVar = 0;
 
             // for starting this app automatically next day.
-            Alarm alarm = new Alarm();
-            alarm.setAlarm(getActivity());
+            //Alarm alarm = new Alarm();
+            //alarm.setAlarm(getActivity());
 
             Cursor cursor = myDb.getAllDataTable3();
             if (cursor != null && cursor.getCount() > 0) {
@@ -123,7 +121,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             riskIndexVar = settings.getInt("myRiskIndex", 0);
         }
         violationNumVar = settings.getInt("crowdNo", 0);
-        BTonTime = settings.getFloat("totalBTOnTime", 0);
+        BTOffTime = settings.getFloat("totalBTOnTime", 0);
         totalDays = settings.getInt("totalDays", 1);  // since the app installation
 
         // register receiver for broadcast when contact today is changed
@@ -154,7 +152,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
 
         // get past 13 day sum of contacts.
         past13DaySum = findPast13DaySum();
-        findAverageAndMaxRiskAndBTonTime();
+        findAverageAndMaxRiskAndBTOffTime();
 
         // Assign values to the stats
         setStatsValues();
@@ -189,22 +187,22 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             {
                 Log.i("TAB2", "Half hour receiver");
                 SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
-                // update BTonTime.
-                BTonTime = settings.getFloat("totalBTOnTime", 0);
-                BTonTimeText.setText(BTonTime+" Hrs");
+                // update BTOffTime.
+                BTOffTime = settings.getFloat("totalBTOffTime", 0);
+                BTOffTimeText.setText(BTOffTime+" Hrs");
 
                 violationNumVar = settings.getInt("crowdNo", 0);
                 violationNumText.setText(String.valueOf(violationNumVar));
 
-                if(BTonTime>maxBTonTime) {
-                    maxBTonTime = BTonTime;
-                    maxBTonTimeText.setText(maxBTonTime + " Hrs");
+                if(BTOffTime>maxBTOffTime) {
+                    maxBTOffTime = BTOffTime;
+                    maxBTOffTimeText.setText(maxBTOffTime + " Hrs");
                 }
                 if(totalDays>=14) {
-                    avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / 14) + " Hrs");
+                    avgBTOffTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTOffSum + BTOffTime) / 14) + " Hrs");
                 }
                 else {
-                    avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / totalDays)+" Hrs");
+                    avgBTOffTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTOffSum + BTOffTime) / totalDays)+" Hrs");
                 }
 
                 riskIndexVar = intent.getIntExtra("riskIndex", 0);
@@ -245,7 +243,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             cursor.close();
         }
         violationNumVar = settings.getInt("crowdNo", 0);
-        BTonTime = settings.getFloat("totalBTOnTime", 0);
+        BTOffTime = settings.getFloat("totalBTOffTime", 0);
 
         avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
         avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
@@ -255,33 +253,23 @@ public class Tab2 extends Fragment implements View.OnClickListener {
 
         violationNumText.setText(String.valueOf(violationNumVar));
 
-//        if (locationVar!=null && (!locationVar.equals("null"))) {
-//            locationStat.setText(locationVar);
-//            locationStatPBar.setVisibility(View.INVISIBLE);
-//            locationStat.setTextColor(getResources().getColor(zoneColorId));
-//        }
-//        if (!zoneColorVar.equals("null")) {
-//            zoneColor.setText(zoneColorVar);
-//            zoneColor.setTextColor(getResources().getColor(zoneColorId));
-//        }
-
         updateRiskView();
 
-        BTonTimeText.setText(BTonTime+" Hrs");
+        BTOffTimeText.setText(BTOffTime+" Hrs");
 
-        maxBTonTimeText.setText(maxBTonTime+" Hrs");
+        maxBTOffTimeText.setText(maxBTOffTime+" Hrs");
         if(totalDays>=14) {
-            avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / 14) + " Hrs");
+            avgBTOffTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTOffSum + BTOffTime) / 14) + " Hrs");
         }
         else {
-            avgBTonTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTonSum + BTonTime) / totalDays)+" Hrs");
+            avgBTOffTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTOffSum + BTOffTime) / totalDays)+" Hrs");
         }
 
         bluetoothAdapter.setName(AppId+Main2Activity.myDeviceId+"_"+maxRiskIndexVar);
         Log.i(TAG, "Your name changed :"+bluetoothAdapter.getName());
     }
 
-    private void findAverageAndMaxRiskAndBTonTime()
+    private void findAverageAndMaxRiskAndBTOffTime()
     {
         Cursor cursor1 = myDb.getAllDataTable2();
         int s=0, mx=0, temp;
@@ -300,17 +288,14 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         past13DaysRiskSum = s;
         maxRiskIndexVar = mx;
 
-        past13DaysBTonSum = BTs;
-        maxBTonTime = BTmx;
+        past13DaysBTOffSum = BTs;
+        maxBTOffTime = BTmx;
 
-        if(BTonTime>BTmx)
-            maxBTonTime = BTonTime;
+        if(BTOffTime>BTmx)
+            maxBTOffTime = BTOffTime;
 
         if(riskIndexVar>mx)
             maxRiskIndexVar = riskIndexVar;
-
-        //Log.i(TAG, "risk sum, days :"+past13DaysRiskSum+", "+totalDays);
-        //Log.i(TAG, "BT sum, days :"+past13DaysBTonSum+", "+totalDays);
 
         SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
         SharedPreferences.Editor mapEditor = settings.edit();
@@ -387,7 +372,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
 
             case R.id.id_bluetoothInfo:
 //                Cursor cursor1 = myDb.getAllDataTable2();
-//                String msg="Risk    BTon\n";
+//                String msg="Risk    BTOff\n";
 //                while(cursor1!=null && cursor1.moveToNext())
 //                {
 //                    msg += cursor1.getInt(2)+"     "+cursor1.getFloat(3)+"\n";

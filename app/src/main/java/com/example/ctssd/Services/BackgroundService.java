@@ -153,42 +153,31 @@ public class BackgroundService extends Service {
                         //temp += Calendar.getInstance().get(Calendar.MINUTE)+":"+Calendar.getInstance().get(Calendar.SECOND)+"=";
                         Log.i(TAG, "Sheduler has been called "+temp);
 
-                        //Utilities utilities = new Utilities();
-                        //utilities.sendTempNotification(getApplication(), "BTOnTime", temp, 111, "tempC");
-
                         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                         SharedPreferences.Editor edit = settings.edit();
-                        if(bluetoothAdapter.getState()==BluetoothAdapter.STATE_ON)
+                        if(bluetoothAdapter.getState()!=BluetoothAdapter.STATE_ON && Calendar.getInstance().get(Calendar.HOUR_OF_DAY)>=7 && Calendar.getInstance().get(Calendar.HOUR_OF_DAY)<=22)
                         {
-                            Log.i(TAG, "BT is on");
-                            float totalBTOnTime = settings.getFloat("totalBTOnTime", 0);
-                            totalBTOnTime += 0.50;
-                            edit.putFloat("totalBTOnTime", totalBTOnTime);
-                            Log.i(TAG, "TotalBTOnTime :"+totalBTOnTime);
+                            if(isUserMoving)
+                            {
+                                edit.putFloat("totalBTOffTime", settings.getFloat("totalBTOffTime", 0)+1.0f);
+                                isUserMoving = false;
+                            }
+                            else
+                            {
+                                edit.putFloat("totalBTOffTime", settings.getFloat("totalBTOffTime", 0)+0.5f);
+                            }
                         }
-                        else if(isUserMoving)
-                        {
-                            edit.putInt("bluetoothPenalty", settings.getInt("bluetoothPenalty", 0)+1);
-                        }
+
                         int preMaxRFC = settings.getInt("maxRiskFromContacts", 0);
                         if( maxRiskFromContacts>preMaxRFC )
                         {
                             edit.putInt("maxRiskFromContacts", maxRiskFromContacts);
                             maxRiskFromContacts = 0;
                         }
-                        if(isUserMoving && BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
-                        {
-                            edit.putInt("bluetoothPenalty", (settings.getInt("bluetoothPenalty", 0)+1));
-                            isUserMoving=false;
-                        }
+
                         edit.apply();
                         findRiskIndex();
 
-                        if(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)>=22)
-                        {
-                            Intent intent1 = new Intent("ACTION_STOP_SERVICE");
-                            sendBroadcast(intent1);
-                        }
                     }
                 }, 30, 30, TimeUnit.MINUTES); //todo
 
@@ -265,8 +254,8 @@ public class BackgroundService extends Service {
         IntentFilter intentFilter3 = new IntentFilter("COORDINATES_FOUND");
         registerReceiver(locationReceiver, intentFilter3);
 
-        IntentFilter intentFilter5 = new IntentFilter("ACTION_STOP_SERVICE");
-        registerReceiver(stopServiceReceiver, intentFilter5);
+        //IntentFilter intentFilter5 = new IntentFilter("ACTION_STOP_SERVICE");
+        //registerReceiver(stopServiceReceiver, intentFilter5);
 
         //return START_REDELIVER_INTENT;  //TODO: START_STICKY
         return START_STICKY;
@@ -337,24 +326,24 @@ public class BackgroundService extends Service {
         }
     };
 
-    private final BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent)
-        {
-            String action = intent.getAction();
-            Log.i(TAG, "inside stopServiceReceiver :" + action);
-
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-            notificationManager.cancel(112);
-
-            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
-            {
-                notificationManager.cancel(1245);
-            }
-
-            stopForeground(true);
-            stopSelf();
-        }
-    };
+//    private final BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
+//        public void onReceive(Context context, Intent intent)
+//        {
+//            String action = intent.getAction();
+//            Log.i(TAG, "inside stopServiceReceiver :" + action);
+//
+//            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+//            notificationManager.cancel(112);
+//
+//            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
+//            {
+//                notificationManager.cancel(1245);
+//            }
+//
+//            stopForeground(true);
+//            stopSelf();
+//        }
+//    };
 
     // Create a BroadcastReceiver for ACTION_FOUND.
     private final BroadcastReceiver receiver = new BroadcastReceiver()
@@ -532,7 +521,8 @@ public class BackgroundService extends Service {
         int maxRFC = settings.getInt("maxRiskFromContacts", 0);
         if(maxRiskIndexVar<maxRFC)
         {
-            if(fromContactsRiskMax<(3*maxRFC)/10){
+            if(fromContactsRiskMax<(3*maxRFC)/10)
+            {
                 fromContactsRiskMax = (3*maxRFC)/10;
             }
         }
@@ -557,12 +547,12 @@ public class BackgroundService extends Service {
         mapEditor.putInt("fromContactsToday", fromContactsToday);
 
         //3. Numbers of hours user's bluetooth was off.
-        Utilities utilities = new Utilities();
-        int BluetoothOffTime = (int) utilities.getTotalBluetoothOffTime(this);
-        int fromBluetoothOffTime = settings.getInt("bluetoothPenalty", 0);
-        fromBluetoothOffTime += (BluetoothOffTime*0.5) + settings.getInt("bluetoothPenalty",0);
+        int fromBluetoothOffTime = (int)settings.getFloat("totalBTOffTime", 0);
         if(fromBluetoothOffTime>15)
+        {
             fromBluetoothOffTime = 15;
+        }
+
         mapEditor.putInt("fromBluetoothOffTime", fromBluetoothOffTime);
 
         //4. Number of times user was standing in crowd.
@@ -644,7 +634,7 @@ public class BackgroundService extends Service {
             unregisterReceiver(turnOnBluetooth);
             unregisterReceiver(locationReceiver);
             unregisterReceiver(receiver);
-            unregisterReceiver(stopServiceReceiver);
+            //unregisterReceiver(stopServiceReceiver);
         }
         catch (Exception e)
         {

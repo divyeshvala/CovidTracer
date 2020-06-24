@@ -395,7 +395,7 @@
                             android:id="@+id/id_bluetoothTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Bluetooth On Time"
+                            android:text="Bluetooth Off Time"
                             android:textSize="16sp"
                             android:textAlignment="center"
                             android:layout_above="@+id/id_bluetoothCenter"

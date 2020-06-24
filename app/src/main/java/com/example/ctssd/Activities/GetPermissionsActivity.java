@@ -74,8 +74,6 @@ public class GetPermissionsActivity extends AppCompatActivity {
             requestBTCount++;
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 41);
-
-            setTimerToCheckIfUserIsActive();
         }
         else if(bluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
             //bluetoothAdapter.setName(AppId+myPhoneNumber+"_"+riskIndex);
@@ -191,7 +189,6 @@ public class GetPermissionsActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_FINE_LOCATION
             }, 43);
         }
-        setTimerToCheckIfUserIsActive();
     }
 
     private void enableGPS()
@@ -236,6 +233,5 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 }
             }
         });
-        setTimerToCheckIfUserIsActive();
     }
 }
