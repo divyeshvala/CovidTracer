@@ -1,13 +1,12 @@
-package com.example.ctssd.Services;
+package com.example.ctssd.services;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
-import com.example.ctssd.Activities.SplashActivity;
+import com.example.ctssd.activities.SplashActivity;
 
 import java.util.Calendar;
 
@@ -16,15 +15,12 @@ public class Alarm extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent)
     {
-        //String message = "Hellooo, alrm worked ----";
-        //Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         Intent intent2 = new Intent(context, SplashActivity.class);
         intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent2);
     }
 
     public void setAlarm(Context context){
-        Log.d("Carbon","Alrm SET !!");
 
         // get a Calendar object with current time
         Calendar cal = Calendar.getInstance();

@@ -1,4 +1,4 @@
-package com.example.ctssd.Activities;
+package com.example.ctssd.activities;
 
 import android.content.Intent;
 import android.os.Bundle;

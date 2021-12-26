@@ -1,4 +1,4 @@
-package com.example.ctssd.Activities;
+package com.example.ctssd.activities;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -15,13 +15,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.viewpager.widget.ViewPager;
 
-import com.example.ctssd.Activities.Screens.Display;
-import com.example.ctssd.Activities.Screens.Dashboard;
-import com.example.ctssd.Activities.Screens.Stats;
+import com.example.ctssd.activities.screens.Display;
+import com.example.ctssd.activities.screens.Dashboard;
+import com.example.ctssd.activities.screens.Stats;
 import com.example.ctssd.R;
-import com.example.ctssd.Services.BackgroundService;
-import com.example.ctssd.dao.ContactDao;
-import com.example.ctssd.model.Contact;
+import com.example.ctssd.services.BackgroundService;
 import com.google.android.material.tabs.TabLayout;
 
 public class MainActivity extends AppCompatActivity implements Display.OnFragmentInteractionListener, Dashboard.OnFragmentInteractionListener, Stats.OnFragmentInteractionListener {

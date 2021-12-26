@@ -1,4 +1,4 @@
-package com.example.ctssd.Activities;
+package com.example.ctssd.activities;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
-import com.example.ctssd.Activities.Screens.Display;
-import com.example.ctssd.Activities.Screens.Dashboard;
-import com.example.ctssd.Activities.Screens.Stats;
+import com.example.ctssd.activities.screens.Display;
+import com.example.ctssd.activities.screens.Dashboard;
+import com.example.ctssd.activities.screens.Stats;
 import com.example.ctssd.R;
 
 import java.util.ArrayList;

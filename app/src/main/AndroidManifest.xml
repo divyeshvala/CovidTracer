@@ -19,31 +19,31 @@
         android:theme="@style/AppTheme">
 
         <receiver
-            android:name=".Services.Alarm"
+            android:name=".services.Alarm"
             android:enabled="true"
             android:exported="true"
             android:process=":remote" />
 
-        <activity android:name=".Activities.GetPermissionsActivity" />
-        <activity android:name=".Activities.CoronaInfoActivity" />
+        <activity android:name=".activities.GetPermissionsActivity" />
+        <activity android:name=".activities.CoronaInfoActivity" />
         <activity
-            android:name=".Activities.MainActivity"
+            android:name=".activities.MainActivity"
             android:screenOrientation="sensorPortrait" />
-        <activity android:name=".Activities.OtpActivity" />
-        <activity android:name=".Activities.RegisterActivity" />
+        <activity android:name=".activities.OtpActivity" />
+        <activity android:name=".activities.RegisterActivity" />
         <!--
             Because android:exported is set to "false",
             the service is only available to this app.
         -->
         <service
-            android:name=".Services.BackgroundService"
+            android:name=".services.BackgroundService"
             android:enabled="true"
             android:exported="false"
             android:launchMode="singleTop"
             android:stopWithTask="false" />
 
         <activity
-            android:name=".Activities.SplashActivity"
+            android:name=".activities.SplashActivity"
             android:screenOrientation="sensorPortrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

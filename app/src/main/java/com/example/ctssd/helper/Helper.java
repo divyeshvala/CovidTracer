@@ -8,7 +8,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -18,7 +17,7 @@ import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import com.example.ctssd.Activities.MainActivity;
+import com.example.ctssd.activities.MainActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.dao.ContactDao;
 import com.example.ctssd.dao.ContactHistoryDao;
@@ -30,11 +29,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 public class Helper
 {
-    private static final String TAG = "Utilities";
+    private static final String TAG = "Helper";
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private ContactDao contactDao;
     private ContactHistoryDao contactHistoryDao;

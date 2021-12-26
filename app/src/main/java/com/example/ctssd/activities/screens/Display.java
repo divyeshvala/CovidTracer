@@ -1,4 +1,4 @@
-package com.example.ctssd.Activities.Screens;
+package com.example.ctssd.activities.screens;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

@@ -1,11 +1,10 @@
-package com.example.ctssd.Activities.Screens;
+package com.example.ctssd.activities.screens;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 

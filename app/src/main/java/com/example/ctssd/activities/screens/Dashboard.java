@@ -1,4 +1,4 @@
-package com.example.ctssd.Activities.Screens;
+package com.example.ctssd.activities.screens;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,8 +17,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import com.example.ctssd.Activities.CoronaInfoActivity;
-import com.example.ctssd.Activities.MainActivity;
+import com.example.ctssd.activities.CoronaInfoActivity;
+import com.example.ctssd.activities.MainActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.dao.ContactDao;
 import com.example.ctssd.dao.DailyStatDao;

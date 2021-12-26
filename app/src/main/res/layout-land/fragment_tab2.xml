@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:stretchColumns="1"
-    tools:context=".Activities.Screens.Dashboard"
+    tools:context=".activities.screens.Dashboard"
     android:background="@color/surfaceBackground"
     >
 

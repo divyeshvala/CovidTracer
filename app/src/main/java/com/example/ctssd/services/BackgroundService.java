@@ -3,7 +3,7 @@
  * and add them to local storage.
  */
 
-package com.example.ctssd.Services;
+package com.example.ctssd.services;
 
 import android.Manifest;
 import android.app.AlarmManager;
@@ -37,11 +37,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.example.ctssd.Activities.MainActivity;
+import com.example.ctssd.activities.MainActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.dao.ContactDao;
-import com.example.ctssd.dao.ContactHistoryDao;
-import com.example.ctssd.dao.DailyStatDao;
 import com.example.ctssd.model.Contact;
 import com.example.ctssd.model.UserQueue;
 import com.example.ctssd.helper.Helper;
