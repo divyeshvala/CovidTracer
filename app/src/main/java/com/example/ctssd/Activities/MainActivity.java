@@ -20,6 +20,8 @@ import com.example.ctssd.Activities.Screens.Dashboard;
 import com.example.ctssd.Activities.Screens.Stats;
 import com.example.ctssd.R;
 import com.example.ctssd.Services.BackgroundService;
+import com.example.ctssd.dao.ContactDao;
+import com.example.ctssd.model.Contact;
 import com.google.android.material.tabs.TabLayout;
 
 public class MainActivity extends AppCompatActivity implements Display.OnFragmentInteractionListener, Dashboard.OnFragmentInteractionListener, Stats.OnFragmentInteractionListener {
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements Display.OnFragmen
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
+        setContentView(R.layout.activity_main);
 
         final SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
         myDeviceId = settings.getString("myDeviceId", "NA");

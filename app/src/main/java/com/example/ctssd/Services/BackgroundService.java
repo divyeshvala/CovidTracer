@@ -41,6 +41,8 @@ import androidx.core.app.NotificationManagerCompat;
 import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.DatabaseHelper;
+import com.example.ctssd.dao.ContactDao;
+import com.example.ctssd.model.Contact;
 import com.example.ctssd.model.UserQueue;
 import com.example.ctssd.Utils.Utilities;
 
@@ -396,10 +398,14 @@ public class BackgroundService extends Service {
                         edit.apply();
                     }
 
-                    myDb.insertData(phone, time, riskIndex, latitude+"_"+longitude);
+                    // todo : replace with pre code if doesn't work
+                    //myDb.insertData(phone, time, riskIndex, latitude+"_"+longitude);
+                    ContactDao contactDao = new ContactDao(getApplicationContext());
+                    contactDao.save(new Contact(phone, time, riskIndex, latitude+"_"+longitude));
+
                     Log.i(TAG, "device added :" +phone+"  "+time+"  "+riskIndex);
 
-                    if(riskIndex>maxRiskFromContacts)
+                    if(riskIndex > maxRiskFromContacts)
                     {
                         maxRiskFromContacts = riskIndex;
                     }
