@@ -1,9 +1,9 @@
-package com.example.ctssd.Utils;
-public class UserObject
+package com.example.ctssd.model;
+public class User
 {
     private String phone;
     private String time;
-    public UserObject(String phone, String time)
+    public User(String phone, String time)
     {
         this.phone = phone;
         this.time = time;

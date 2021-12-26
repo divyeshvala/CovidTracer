@@ -66,26 +66,27 @@ public class RegisterActivity extends AppCompatActivity {
         mGenerateBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String country_code = mCountryCode.getText().toString();
-                String phone_number = mPhoneNumber.getText().toString();
-
-                complete_phone_number = country_code + phone_number;
-
-                if(country_code.isEmpty() || phone_number.isEmpty()){
-                    mLoginFeedbackText.setText("Please fill in the form to continue.");
-                    mLoginFeedbackText.setVisibility(View.VISIBLE);
-                } else {
-                    mLoginProgress.setVisibility(View.VISIBLE);
-                    mGenerateBtn.setEnabled(false);
-
-                    PhoneAuthProvider.getInstance().verifyPhoneNumber(
-                            complete_phone_number,
-                            60,
-                            TimeUnit.SECONDS,
-                            RegisterActivity.this,
-                            mCallbacks
-                    );
-                }
+                sendUserToHome();
+//                String country_code = mCountryCode.getText().toString();
+//                String phone_number = mPhoneNumber.getText().toString();
+//
+//                complete_phone_number = country_code + phone_number;
+//
+//                if(country_code.isEmpty() || phone_number.isEmpty()){
+//                    mLoginFeedbackText.setText("Please fill in the form to continue.");
+//                    mLoginFeedbackText.setVisibility(View.VISIBLE);
+//                } else {
+//                    mLoginProgress.setVisibility(View.VISIBLE);
+//                    mGenerateBtn.setEnabled(false);
+//
+//                    PhoneAuthProvider.getInstance().verifyPhoneNumber(
+//                            complete_phone_number,
+//                            60,
+//                            TimeUnit.SECONDS,
+//                            RegisterActivity.this,
+//                            mCallbacks
+//                    );
+//                }
             }
         });
 

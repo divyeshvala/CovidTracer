@@ -32,18 +32,16 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.example.ctssd.Activities.GetPermissionsActivity;
-import com.example.ctssd.Activities.Main2Activity;
+import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
 import com.example.ctssd.Utils.DatabaseHelper;
-import com.example.ctssd.Utils.UserQueueObject;
+import com.example.ctssd.model.UserQueue;
 import com.example.ctssd.Utils.Utilities;
 
 import java.util.Calendar;
@@ -72,13 +70,12 @@ public class BackgroundService extends Service {
     private double latitude = -1, longitude = -1;
     private DatabaseHelper myDb;
     private BluetoothAdapter bluetoothAdapter;
-    private Queue<UserQueueObject> contacts;
+    private Queue<UserQueue> contacts;
     private Set<String> contactsSet;
     private static boolean isUserMoving = false;
     private static String deviceId;
     private static int contactsTodayGlobal = 0, riskIndexGlobal = 0;
     private String temp="";
-
     private Alarm alarm = new Alarm();
 
     private class MyLocationListener implements LocationListener {
@@ -177,7 +174,6 @@ public class BackgroundService extends Service {
 
                         edit.apply();
                         findRiskIndex();
-
                     }
                 }, 30, 30, TimeUnit.MINUTES); //todo
 
@@ -201,7 +197,7 @@ public class BackgroundService extends Service {
         contactsSet = new HashSet<>();
 
         createNotificationChannel();
-        Intent notificationIntent = new Intent(this, Main2Activity.class);
+        Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 123, notificationIntent, 0);
 
@@ -461,8 +457,8 @@ public class BackgroundService extends Service {
         if(!contactsSet.contains(phone))
         {
             contactsSet.add(phone);
-            contacts.add(new UserQueueObject(phone, now));
-            UserQueueObject head = contacts.peek();
+            contacts.add(new UserQueue(phone, now));
+            UserQueue head = contacts.peek();
             if(head!=null)
             {
                 Log.i(TAG, "CheckIfInTheCrowd : head time ="+ head.getCalendar().getTime());
@@ -496,7 +492,7 @@ public class BackgroundService extends Service {
                 {
                     contactsSet.remove(head.getPhone());
                     contacts.remove();
-                    UserQueueObject qHead = contacts.peek();
+                    UserQueue qHead = contacts.peek();
                     while(qHead!=null && now.getTime().getTime()-qHead.getCalendar().getTime().getTime() > CROWD_TIME_LIMIT)
                     {
                         contactsSet.remove(qHead.getPhone());

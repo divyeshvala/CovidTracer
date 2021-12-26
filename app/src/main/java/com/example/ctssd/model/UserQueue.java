@@ -1,13 +1,13 @@
-package com.example.ctssd.Utils;
+package com.example.ctssd.model;
 
 import java.util.Calendar;
 
-public class UserQueueObject
+public class UserQueue
 {
     private String phone;
     private Calendar calendar;
 
-    public UserQueueObject(String phone, Calendar calendar) {
+    public UserQueue(String phone, Calendar calendar) {
         this.phone = phone;
         this.calendar = calendar;
     }

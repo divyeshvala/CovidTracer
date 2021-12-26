@@ -97,7 +97,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
             {
                 if(!isUserActive)
                 {
-                    Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                    Intent intent = new Intent(GetPermissionsActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 }
@@ -132,7 +132,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
                     enableGPS();
                 else
                 {
-                    Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                    Intent intent = new Intent(GetPermissionsActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 }
@@ -144,7 +144,7 @@ public class GetPermissionsActivity extends AppCompatActivity {
                 {
                     case Activity.RESULT_OK:
                         Log.i(TAG, "Got it : GPS Enabled by user");
-                        Intent intent = new Intent(GetPermissionsActivity.this, Main2Activity.class);
+                        Intent intent = new Intent(GetPermissionsActivity.this, MainActivity.class);
                         startActivity(intent);
                         finish();
                         break;

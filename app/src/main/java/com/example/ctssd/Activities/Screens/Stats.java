@@ -1,19 +1,15 @@
-package com.example.ctssd.Activities.Fragments;
+package com.example.ctssd.Activities.Screens;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
@@ -43,7 +39,7 @@ import java.util.Objects;
 
 import static android.content.Context.MODE_PRIVATE;
 
-public class Tab3 extends Fragment {
+public class Stats extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -67,13 +63,13 @@ public class Tab3 extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    public Tab3() {
+    public Stats() {
         // Required empty public constructor
     }
 
-    public static Tab3 newInstance(String param1, String param2)
+    public static Stats newInstance(String param1, String param2)
     {
-        Tab3 fragment = new Tab3();
+        Stats fragment = new Stats();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);

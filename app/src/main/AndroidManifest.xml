@@ -17,16 +17,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <receiver
-            android:process=":remote"
             android:name=".Services.Alarm"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="true"
+            android:process=":remote" />
 
         <activity android:name=".Activities.GetPermissionsActivity" />
         <activity android:name=".Activities.CoronaInfoActivity" />
         <activity
-            android:name=".Activities.Main2Activity"
+            android:name=".Activities.MainActivity"
             android:screenOrientation="sensorPortrait" />
         <activity android:name=".Activities.OtpActivity" />
         <activity android:name=".Activities.RegisterActivity" />
@@ -42,7 +43,7 @@
             android:stopWithTask="false" />
 
         <activity
-            android:name=".Activities.MainActivity"
+            android:name=".Activities.SplashActivity"
             android:screenOrientation="sensorPortrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

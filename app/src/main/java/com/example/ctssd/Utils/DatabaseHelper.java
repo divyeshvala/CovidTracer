@@ -15,16 +15,18 @@ public class DatabaseHelper extends SQLiteOpenHelper
     private static final String TABLE2 = "table2";
     private static final String TABLE3 = "table3";
 
-    public DatabaseHelper(Context context)
-    {
+    public DatabaseHelper(Context context) {
         super(context, DATABASE, null, 1);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db)
     {
+        // Data of people the user has contacted
         String table1 = "CREATE TABLE "+ TABLE1 + "(PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER, LOCATION TEXT)";
+        // Day-wise data (contacts, risk) of data. (Last 14 days)
         String table2 = "CREATE TABLE "+ TABLE2 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, count INTEGER, RISK INTEGER, BTON FLOAT)";
+        // Data of all the places user has been. (Last 14 days)
         String table3 = "CREATE TABLE "+ TABLE3 + "(id INTEGER PRIMARY KEY AUTOINCREMENT, DAY INTEGER, MONTH INTEGER, YEAR INTEGER, PHONE TEXT, TIME TEXT, LOCATION TEXT)";
 
         db.execSQL(table1);

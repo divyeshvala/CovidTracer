@@ -1,8 +1,5 @@
-/* This Tab will is for displaying all stats like currents status, risk index,
-   average contacts, contacts today and location.
- */
 
-package com.example.ctssd.Activities.Fragments;
+package com.example.ctssd.Activities.Screens;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,12 +17,10 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import com.example.ctssd.Activities.CoronaInfoActivity;
-import com.example.ctssd.Activities.Main2Activity;
+import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
-import com.example.ctssd.Services.BackgroundService;
 import com.example.ctssd.Utils.DatabaseHelper;
 import com.example.ctssd.Utils.Utilities;
 import java.util.Locale;
@@ -33,7 +28,7 @@ import java.util.Objects;
 
 import static android.content.Context.MODE_PRIVATE;
 
-public class Tab2 extends Fragment implements View.OnClickListener {
+public class Dashboard extends Fragment implements View.OnClickListener {
     private BluetoothAdapter bluetoothAdapter;
     private static final String AppId = "c1t2";
     private static final String TAG = "TAB2";
@@ -54,7 +49,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
     private static int contactsTodayVar = 0, past13DaySum = 0, totalDays = 1,
             violationNumVar = 0;
 
-    public Tab2() {
+    public Dashboard() {
     }
 
     @Override
@@ -141,14 +136,14 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         });
 
         // start BackgroundService for discovering nearby devices
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(getActivity(), BackgroundService.class);
-                //Objects.requireNonNull(getContext()).startService(intent);
-                ContextCompat.startForegroundService(Objects.requireNonNull(getActivity()), intent);
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                Intent intent = new Intent(getActivity(), BackgroundService.class);
+//                //Objects.requireNonNull(getContext()).startService(intent);
+//                ContextCompat.startForegroundService(Objects.requireNonNull(getActivity()), intent);
+//            }
+//        }).start();
 
         // get past 13 day sum of contacts.
         past13DaySum = findPast13DaySum();
@@ -265,7 +260,7 @@ public class Tab2 extends Fragment implements View.OnClickListener {
             avgBTOffTimeText.setText(String.format(Locale.getDefault(),"%.2f", (past13DaysBTOffSum + BTOffTime) / totalDays)+" Hrs");
         }
 
-        bluetoothAdapter.setName(AppId+Main2Activity.myDeviceId+"_"+maxRiskIndexVar);
+        bluetoothAdapter.setName(AppId+ MainActivity.myDeviceId+"_"+maxRiskIndexVar);
         Log.i(TAG, "Your name changed :"+bluetoothAdapter.getName());
     }
 
@@ -381,8 +376,8 @@ public class Tab2 extends Fragment implements View.OnClickListener {
         }
     }
 
-    public static Tab2 newInstance(String param1, String param2) {
-        Tab2 fragment = new Tab2();
+    public static Dashboard newInstance(String param1, String param2) {
+        Dashboard fragment = new Dashboard();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);

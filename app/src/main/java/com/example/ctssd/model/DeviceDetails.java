@@ -1,14 +1,14 @@
-package com.example.ctssd.Utils;
+package com.example.ctssd.model;
 
 import java.util.Calendar;
 
-public class DeviceDetailsObject
+public class DeviceDetails
 {
     private Calendar time;
     private String distance;
     private int riskIndex;
 
-    public DeviceDetailsObject(Calendar time, String distance, int riskIndex) {
+    public DeviceDetails(Calendar time, String distance, int riskIndex) {
         this.time = time;
         this.distance = distance;
         this.riskIndex = riskIndex;

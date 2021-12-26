@@ -1,13 +1,12 @@
-package com.example.ctssd.Utils;
+package com.example.ctssd.model;
 
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import java.util.ArrayList;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,10 +15,10 @@ import com.example.ctssd.R;
 
 public class Adapter extends RecyclerView.Adapter< Adapter.QuestionListViewHolder >
 {
-    private ArrayList<UserObject> questionList;
+    private ArrayList<User> questionList;
     private Context context;
 
-    public Adapter(Context context, ArrayList<UserObject> questionList)
+    public Adapter(Context context, ArrayList<User> questionList)
     {
         this.questionList = questionList;
         this.context = context;

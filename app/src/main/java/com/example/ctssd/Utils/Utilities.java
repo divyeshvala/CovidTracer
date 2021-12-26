@@ -1,6 +1,5 @@
 package com.example.ctssd.Utils;
 
-import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -20,10 +19,9 @@ import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import com.example.ctssd.Activities.Main2Activity;
 import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
-import com.example.ctssd.Services.Alarm;
+import com.example.ctssd.model.User;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -40,7 +38,7 @@ public class Utilities
     private static final String TAG = "Utilities";
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseHelper myDb;
-    private ArrayList<UserObject> list = new ArrayList<>();
+    private ArrayList<User> list = new ArrayList<>();
 
     private final String key = "aesEncryptionKey";
     private final String initVector = "encryptionIntVec";
@@ -215,7 +213,7 @@ public class Utilities
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
-        database.getReference("Users"+"/"+Main2Activity.myDeviceId+"/"+year+"/"+month+"/"+day).removeValue();
+        database.getReference("Users"+"/"+ MainActivity.myDeviceId+"/"+year+"/"+month+"/"+day).removeValue();
     }
 
     public String encryptAES128(String value)
@@ -278,7 +276,7 @@ public class Utilities
     public void sendStatsUpdateNotification(Context context, int riskFactor, int contactsToday)
     {
         createANotificationChannel(context);
-        Intent notificationIntent = new Intent(context, Main2Activity.class);
+        Intent notificationIntent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context,
                 112, notificationIntent, 0);
 
@@ -315,7 +313,7 @@ public class Utilities
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
-        Intent activityIntent = new Intent(context, Main2Activity.class);
+        Intent activityIntent = new Intent(context, MainActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(context,
                 0, activityIntent, 0);
 
@@ -349,7 +347,7 @@ public class Utilities
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
-        Intent activityIntent = new Intent(context, Main2Activity.class);
+        Intent activityIntent = new Intent(context, MainActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(context,
                 0, activityIntent, 0);
 

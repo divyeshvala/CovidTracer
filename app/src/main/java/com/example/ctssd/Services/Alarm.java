@@ -7,7 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.ctssd.Activities.MainActivity;
+import com.example.ctssd.Activities.SplashActivity;
 
 import java.util.Calendar;
 
@@ -18,7 +18,7 @@ public class Alarm extends BroadcastReceiver
     {
         //String message = "Hellooo, alrm worked ----";
         //Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-        Intent intent2 = new Intent(context, MainActivity.class);
+        Intent intent2 = new Intent(context, SplashActivity.class);
         intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent2);
     }

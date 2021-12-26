@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
-import com.example.ctssd.Activities.Fragments.Tab1;
-import com.example.ctssd.Activities.Fragments.Tab2;
-import com.example.ctssd.Activities.Fragments.Tab3;
+import com.example.ctssd.Activities.Screens.Display;
+import com.example.ctssd.Activities.Screens.Dashboard;
+import com.example.ctssd.Activities.Screens.Stats;
 import com.example.ctssd.R;
 
 import java.util.ArrayList;
@@ -47,11 +47,11 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
         switch (position)
         {
             case 0:
-                return new Tab1();
+                return new Display();
             case 1:
-                return  new Tab2();
+                return  new Dashboard();
             case 2:
-                return  new Tab3();
+                return  new Stats();
             default:
                 return null;
         }
