@@ -2,15 +2,12 @@ package com.example.ctssd.dao;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import com.example.ctssd.model.Contact;
-
 import java.util.ArrayList;
 import java.util.List;
-
 
 
 /**
@@ -52,7 +49,6 @@ public class ContactDao extends SQLiteOpenHelper implements BaseDao<Contact> {
         db.insertWithOnConflict("table1", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
     }
 
-    @Override
     public Contact findById(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("select * from "+TABLE+" where PHONE="+id, null);
@@ -64,21 +60,11 @@ public class ContactDao extends SQLiteOpenHelper implements BaseDao<Contact> {
     }
 
     @Override
-    public void update(Contact object) {
-        //
-    }
-
-    @Override
-    public void delete(String id) {
-        //
-    }
-
-    @Override
     public List<Contact> getAll() {
         List<Contact> contacts = new ArrayList<>();
         SQLiteDatabase db = this.getWritableDatabase();
 
-        Cursor cursor = db.rawQuery("select * from table1", null);
+        Cursor cursor = db.rawQuery("select * from "+TABLE, null);
 
         while(cursor!=null && cursor.moveToNext()) {
             contacts.add(new Contact(cursor.getString(0), cursor.getString(1), cursor.getInt(2),
