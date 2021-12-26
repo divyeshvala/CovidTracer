@@ -6,37 +6,28 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.ctssd.R;
-import com.example.ctssd.model.Adapter;
-import com.example.ctssd.model.DeviceDetails;
-import com.example.ctssd.model.User;
+import com.example.ctssd.model.Contact;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class Display extends Fragment {
 
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
     private Adapter adapter;
-    private static ArrayList<User> list = new ArrayList<>();
-    private static HashMap<String, DeviceDetails> map = new HashMap<>();
-
-    private String mParam1;
-    private String mParam2;
+    private static ArrayList<Contact> list = new ArrayList<>();
 
     private OnFragmentInteractionListener mListener;
     private TextView tempCounter;
@@ -48,18 +39,13 @@ public class Display extends Fragment {
     public static Display newInstance(String param1, String param2) {
         Display fragment = new Display();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -69,20 +55,6 @@ public class Display extends Fragment {
 
         ProgressBar progressBar = root.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
-
-//        root.findViewById(R.id.id_temp).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
-//                SharedPreferences.Editor editor = settings.edit();
-//                editor.putInt("day", -1);
-//                editor.apply();
-//
-//                SharedPreferences.Editor edit = settings.edit();
-//                edit.putFloat("totalBTOnTime", 8);
-//                edit.apply();
-//            }
-//        });
 
         tempCounter = root.findViewById(R.id.id_temp_count);
 
@@ -98,9 +70,6 @@ public class Display extends Fragment {
         IntentFilter intentFilter = new IntentFilter("ACTION_update_list");
         Objects.requireNonNull(getActivity()).registerReceiver(updateListReceiver, intentFilter);
 
-//        IntentFilter intentFilter2 = new IntentFilter("REMOVE_OUT_OF_RANGE_DEVICES");
-//        Objects.requireNonNull(getActivity()).registerReceiver(removeOutOfRangeDevices, intentFilter2);
-
         return root;
     }
 
@@ -115,13 +84,11 @@ public class Display extends Fragment {
                 deviceCounter++;
                 tempCounter.setText(String.valueOf(deviceCounter));
 
-                Log.i("Tab1 receiver", "updateListReceiver");
                 String phone = intent.getStringExtra("phone");
                 String distance = intent.getStringExtra("distance");
                 int riskIndex = intent.getIntExtra("riskIndex", 0);
 
-               // System.out.println(phone +" is connected");
-                for(User object : list)
+                for(Contact object : list)
                 {
                     if(object.getPhone().equals(phone))
                     {
@@ -130,60 +97,11 @@ public class Display extends Fragment {
                     }
                 }
 
-//                try {
-//                    Log.i("Tab1", "Inserting in map ");
-//                    map.put(phone, new DeviceDetailsObject(Calendar.getInstance(), distance, riskIndex));
-//                }
-//                catch (Exception e){
-//                    e.printStackTrace();
-//                }
-//                finally {
-//                    Log.i("Tab1", "Inserted in map ");
-//                }
-
-                list.add(new User(phone, "Dist.-"+distance+"   RI-"+riskIndex));
+                list.add(new Contact(phone, distance, riskIndex, ""));
                 adapter.notifyDataSetChanged();
             }
         }
     };
-
-//    private BroadcastReceiver removeOutOfRangeDevices = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent)
-//        {
-//            String action = intent.getAction();
-//            if(action!=null && action.equals("REMOVE_OUT_OF_RANGE_DEVICES"))
-//            {
-//                try{
-//                    HashMap<String, DeviceDetailsObject> tempMap = map;
-//                    Log.i("Tab1", "Removing from map ");
-//                    for(HashMap.Entry element : tempMap.entrySet())
-//                    {
-//                        String ph = (String) element.getKey();
-//                        DeviceDetailsObject object = (DeviceDetailsObject) element.getValue();
-//                        if(Calendar.getInstance().getTime().getTime()-object.getTime().getTime().getTime()>10000)
-//                        {
-//                            for(UserObject obj : list)
-//                            {
-//                                if(obj.getPhone().equals(ph)) {
-//                                    list.remove(obj);
-//                                    adapter.notifyDataSetChanged();
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//                catch (Exception e){
-//                    e.printStackTrace();
-//                }
-//                finally {
-//                    Log.i("Tab1", "Removed from map");
-//                }
-//            }
-//        }
-//    };
-
 
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
@@ -216,10 +134,60 @@ public class Display extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         try {
-            //Objects.requireNonNull(getActivity()).unregisterReceiver(removeOutOfRangeDevices);
             Objects.requireNonNull(getActivity()).unregisterReceiver(updateListReceiver);
         }catch (Exception e){
             e.printStackTrace();
+        }
+    }
+
+    private class Adapter extends RecyclerView.Adapter< Adapter.ContactsViewHolder >
+    {
+        private List<Contact> contacts;
+        private Context context;
+
+        public Adapter(Context context, List<Contact> contacts)
+        {
+            this.context = context;
+            this.contacts = contacts;
+        }
+
+        public class ContactsViewHolder extends RecyclerView.ViewHolder
+        {
+            private TextView deviceName, time;
+            private RelativeLayout layout;
+
+            public  ContactsViewHolder(View view)
+            {
+                super(view);
+                deviceName = view.findViewById(R.id.id_deviceName);
+                time = view.findViewById(R.id.id_time);
+                layout = view.findViewById(R.id.item_question_layout);
+            }
+        }
+
+        @NonNull
+        @Override
+        public ContactsViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i)
+        {
+            return new ContactsViewHolder(LayoutInflater.from(context).inflate(R.layout.item_device, viewGroup, false));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ContactsViewHolder contactsViewHolder, final int i)
+        {
+            contactsViewHolder.deviceName.setText(contacts.get(i).getPhone());
+            contactsViewHolder.time.setText("Dist.-"+contacts.get(i).getTime()+"  "+contacts.get(i).getRisk());
+            contactsViewHolder.layout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v)
+                { }
+            });
+        }
+
+        @Override
+        public int getItemCount()
+        {
+            return contacts.size();
         }
     }
 }

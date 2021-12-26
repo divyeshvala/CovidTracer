@@ -9,7 +9,6 @@ import com.example.ctssd.model.Contact;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * To read and write the data of people the user has contacted.
  * It contains Phone, RiskIndex, Time, Location of the person this user
@@ -17,7 +16,7 @@ import java.util.List;
  */
 public class ContactDao extends SQLiteOpenHelper implements BaseDao<Contact> {
 
-    private static final String TABLE = "contacts";
+    private static final String TABLE = "table1";
     private static final String DATABASE = "Database.db";
 
     public ContactDao(Context context) {
@@ -27,7 +26,7 @@ public class ContactDao extends SQLiteOpenHelper implements BaseDao<Contact> {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
 
-        String query = "CREATE TABLE "+ TABLE + "(PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER, LOCATION TEXT)";
+        String query = "CREATE TABLE "+ TABLE + " (PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER, LOCATION TEXT)";
         sqLiteDatabase.execSQL(query);
     }
 
@@ -46,7 +45,7 @@ public class ContactDao extends SQLiteOpenHelper implements BaseDao<Contact> {
         contentValues.put("TIME", object.getTime());
         contentValues.put("RISK", object.getRisk());
         contentValues.put("LOCATION", object.getLocation());
-        db.insertWithOnConflict("table1", null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
+        db.insertWithOnConflict(TABLE, null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     public Contact findById(String id) {
@@ -71,5 +70,18 @@ public class ContactDao extends SQLiteOpenHelper implements BaseDao<Contact> {
                     cursor.getString(3)));
         }
         return contacts;
+    }
+
+    public void deleteAll() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("delete from "+ TABLE);
+    }
+
+    public int getCount() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery("select * from "+TABLE, null);
+        if(cursor!=null)
+            return cursor.getCount();
+        return 0;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.ctssd.Utils;
+package com.example.ctssd.helper;
 
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -13,7 +13,6 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
-import android.util.Base64;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -21,31 +20,32 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
-import com.example.ctssd.model.User;
-import com.google.firebase.database.DatabaseReference;
+import com.example.ctssd.dao.ContactDao;
+import com.example.ctssd.dao.ContactHistoryDao;
+import com.example.ctssd.dao.DailyStatDao;
+import com.example.ctssd.model.Contact;
+import com.example.ctssd.model.DailyStat;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
-public class Utilities
+public class Helper
 {
     private static final String TAG = "Utilities";
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseHelper myDb;
-    private ArrayList<User> list = new ArrayList<>();
-
-    private final String key = "aesEncryptionKey";
-    private final String initVector = "encryptionIntVec";
+    private ContactDao contactDao;
+    private ContactHistoryDao contactHistoryDao;
+    private DailyStatDao dailyStatDao;
 
     public boolean isTwentyFourHoursOver(Context context)
     {
-        myDb = new DatabaseHelper(context);
+        contactDao = new ContactDao(context);
+        dailyStatDao = new DailyStatDao(context);
+        contactHistoryDao = new ContactHistoryDao(context);
+
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
         int lastDay = settings.getInt("day", 0);
         int lastMonth = settings.getInt("month", 0);
@@ -54,23 +54,15 @@ public class Utilities
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH);
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
-        Log.i("Utils", "Last date :"+lastDay+"-"+lastMonth+"-"+lastYear);
-        Log.i("Utils", "Current date :"+currentDay+"-"+currentMonth+"-"+currentYear);
-
         if(lastDay==0 || (lastDay == currentDay && lastMonth==currentMonth && lastYear==currentYear))
         {
-            Log.i(TAG, "lastday==currentday");
             if(lastDay==0) {
-                inserLocalDataZeroes();
+                insertDummyStats();
                 SharedPreferences.Editor editor = settings.edit();
                 editor.putInt("day", currentDay);
                 editor.putInt("month", currentMonth);
                 editor.putInt("year", currentYear);
                 editor.apply();
-
-                // for starting this app automatically next day.
-                //Alarm alarm = new Alarm();
-                //alarm.setAlarm(context);
             }
             return false;
         }
@@ -79,16 +71,10 @@ public class Utilities
 
     public void TwentyFourHoursWork(Context context, int preRiskIndex)
     {
-        Log.i(TAG, "Inside TwentyFourHoursWork");
         SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
-        int lastDay = settings.getInt("day", 0);
-        int lastMonth = settings.getInt("month", 0);
-        int lastYear = settings.getInt("year", 0);
         int currentDay = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH);
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-
-        Log.i(TAG, "LAST DATE : "+lastDay+", "+lastMonth+", "+lastYear);
 
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("day", currentDay);
@@ -97,7 +83,6 @@ public class Utilities
         editor.apply();
 
         float BTOffTime = settings.getFloat("totalBTOnTime", 0);
-        int preMaxRFC = settings.getInt("maxRiskFromContacts", 0);
 
         SharedPreferences.Editor ed = settings.edit();
         // update number of days since installation.
@@ -114,38 +99,25 @@ public class Utilities
         ed.putInt("fromCrowdInstances", 0);
         ed.apply();
 
-        myDb = new DatabaseHelper(context);
-        Cursor cursor = myDb.getAllData();
-        int countTable1 = 0;
-        if(cursor!=null)
-        {
-            countTable1 = cursor.getCount()  + settings.getInt("contactsTodayPenalty", 0);
-            SharedPreferences.Editor edit = settings.edit();
-            edit.putInt("contactsTodayPenalty", 0);
-            edit.apply();
-        }
-        while(cursor!=null && cursor.moveToNext())
-        {
-            myDb.insertDataTable3(lastDay, lastMonth, lastYear, cursor.getString(0), cursor.getString(1), cursor.getString(3));
-        }
-        Objects.requireNonNull(cursor).close();
-        myDb.deleteAllRecords();  //delete all records from table1
-        Log.i(TAG, "Data stored now in table3 : "+countTable1);
+        int contactsCount = contactDao.getCount() + settings.getInt("contactsTodayPenalty", 0);
+        SharedPreferences.Editor edit = settings.edit();
+        edit.putInt("contactsTodayPenalty", 0);
+        edit.apply();
 
-        myDb.insertDataTable2(countTable1, preRiskIndex, BTOffTime);
-        Cursor cursor1 = myDb.getAllDataTable2();
-        int countTable2 = 0;
-        if(cursor1!=null)
+        List<Contact> contacts = contactDao.getAll();
+        for(Contact contact : contacts)
         {
-            countTable2 = cursor1.getCount();
-            cursor1.close();
+            contactHistoryDao.save(contact);
         }
+        contactDao.deleteAll();  //delete all records from contacts table
 
-        if(countTable2>13)
+        dailyStatDao.save(new DailyStat(contactsCount, preRiskIndex, BTOffTime));
+
+        int dailyStatCount = dailyStatDao.getCount();
+        if(dailyStatCount>13)
         {
-            myDb.deleteFirstIRecordsTable2(countTable2-13);
+            dailyStatDao.deleteFirstNRecords(dailyStatCount-13);
         }
-        Log.i(TAG, "Records in table2 :"+countTable2);
 
         delete15DayOldDataFromTable3();   // Delete 15 days old data from table
 
@@ -162,8 +134,7 @@ public class Utilities
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
-        Log.i(TAG, "15 day old dates :"+day+", "+month+", "+year);
-        myDb.delete15DaysOldRecordsTable3(day, month, year);
+        contactHistoryDao.delete15DaysOldRecords(day, month, year);
     }
 
     public boolean isInternetAvailable(Context context)
@@ -181,73 +152,39 @@ public class Utilities
 
     public void uploadDataToCloud(Context context)
     {
-        SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
-        String deviceId = settings.getString("myDeviceId", "NA");
-
-        myDb = new DatabaseHelper(context);
-
-        Cursor cursor = myDb.getAllDataTable3();
-
-        DatabaseReference databaseReference = database.getReference("Users"+"/"+ deviceId);
-        while(cursor!=null && cursor.moveToNext())
-        {
-            databaseReference.child(String.valueOf(cursor.getInt(3)))
-                    .child(String.valueOf(cursor.getInt(2)))
-                    .child(String.valueOf(cursor.getInt(1)))
-                    .child(cursor.getString(4)).child("Time").setValue(cursor.getString(5));
-            databaseReference.child(String.valueOf(cursor.getInt(3)))
-                    .child(String.valueOf(cursor.getInt(2)))
-                    .child(String.valueOf(cursor.getInt(1)))
-                    .child(cursor.getString(4)).child("Location").setValue(cursor.getString(6));
-        }
-        Log.i(TAG, "Data uploaded to cloud");
+//        SharedPreferences settings = context.getSharedPreferences("MySharedPref", Context.MODE_PRIVATE);
+//        String deviceId = settings.getString("myDeviceId", "NA");
+//
+//        myDb = new DatabaseHelper(context);
+//
+//        Cursor cursor = myDb.getAllDataTable3();
+//
+//        DatabaseReference databaseReference = database.getReference("Users"+"/"+ deviceId);
+//        while(cursor!=null && cursor.moveToNext())
+//        {
+//            databaseReference.child(String.valueOf(cursor.getInt(3)))
+//                    .child(String.valueOf(cursor.getInt(2)))
+//                    .child(String.valueOf(cursor.getInt(1)))
+//                    .child(cursor.getString(4)).child("Time").setValue(cursor.getString(5));
+//            databaseReference.child(String.valueOf(cursor.getInt(3)))
+//                    .child(String.valueOf(cursor.getInt(2)))
+//                    .child(String.valueOf(cursor.getInt(1)))
+//                    .child(cursor.getString(4)).child("Location").setValue(cursor.getString(6));
+//        }
+//        Log.i(TAG, "Data uploaded to cloud");
         delete15DayOldCloud();
     }
 
     private void delete15DayOldCloud()
     {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -15);
-        Date dateBefore18Days = cal.getTime();
-        cal.setTime(dateBefore18Days);
-        int year = cal.get(Calendar.YEAR);
-        int month = cal.get(Calendar.MONTH);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
-        database.getReference("Users"+"/"+ MainActivity.myDeviceId+"/"+year+"/"+month+"/"+day).removeValue();
-    }
-
-    public String encryptAES128(String value)
-    {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
-
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-
-            byte[] encrypted = cipher.doFinal(value.getBytes());
-            return Base64.encodeToString(encrypted, android.util.Base64.DEFAULT);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return "null";
-    }
-
-    public String decryptAES128(String text)
-    {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
-
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-            byte[] original = cipher.doFinal(Base64.decode(text, Base64.DEFAULT));
-            return new String(original);
-        } catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-        return null;
+//        Calendar cal = Calendar.getInstance();
+//        cal.add(Calendar.DATE, -15);
+//        Date dateBefore18Days = cal.getTime();
+//        cal.setTime(dateBefore18Days);
+//        int year = cal.get(Calendar.YEAR);
+//        int month = cal.get(Calendar.MONTH);
+//        int day = cal.get(Calendar.DAY_OF_MONTH);
+//        database.getReference("Users"+"/"+ MainActivity.myDeviceId+"/"+year+"/"+month+"/"+day).removeValue();
     }
 
     public static void showMessage(Context context, String title, String message)
@@ -397,33 +334,12 @@ public class Utilities
         return 0;
     }
 
-    private void inserLocalDataZeroes()
+
+    private void insertDummyStats()
     {
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-        myDb.insertDataTable2(0, 0, 0);
-//        myDb.insertDataTable2(3, 4);
-//        myDb.insertDataTable2(20, 3);
-//        myDb.insertDataTable2(12, 5);
-//        myDb.insertDataTable2(14, 8);
-//        myDb.insertDataTable2(5, 4);
-//        myDb.insertDataTable2(8, 9);
-//        myDb.insertDataTable2(19, 7);
-//        myDb.insertDataTable2(25, 14);
-//        myDb.insertDataTable2(7, 15);
-//        myDb.insertDataTable2(1, 20);
-//        myDb.insertDataTable2(8, 24);
-//        myDb.insertDataTable2(2, 21);
-//        myDb.insertDataTable2(16, 13);
+        for(int i=0; i<13; i++)
+        {
+            dailyStatDao.save(new DailyStat(0,0,0));
+        }
     }
 }

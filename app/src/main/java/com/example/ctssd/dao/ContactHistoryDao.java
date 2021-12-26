@@ -5,22 +5,24 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import com.example.ctssd.model.DailyStat;
+
+import com.example.ctssd.model.Contact;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class DailyStatDao extends SQLiteOpenHelper implements BaseDao<DailyStat> {
+public class ContactHistoryDao extends SQLiteOpenHelper implements BaseDao<Contact> {
 
-    private static final String TABLE = "table2";
+    private static final String TABLE = "table3";
     private static final String DATABASE = "Database.db";
 
-    public DailyStatDao(Context context) {
+    public ContactHistoryDao(Context context) {
         super(context, DATABASE, null, 1);
     }
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String query = "CREATE TABLE "+ TABLE + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, COUNT INTEGER, RISK INTEGER, BTON FLOAT)";
+        String query = "CREATE TABLE "+ TABLE + " (PHONE TEXT PRIMARY KEY, TIME TEXT, RISK INTEGER, LOCATION TEXT)";
         sqLiteDatabase.execSQL(query);
     }
 
@@ -31,27 +33,29 @@ public class DailyStatDao extends SQLiteOpenHelper implements BaseDao<DailyStat>
     }
 
     @Override
-    public void save(DailyStat object) {
+    public void save(Contact object) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues contentValues = new ContentValues();
-        contentValues.put("COUNT", object.getContactsCount());
+        contentValues.put("PHONE", object.getPhone());
+        contentValues.put("TIME", object.getTime());
         contentValues.put("RISK", object.getRisk());
-        contentValues.put("BTON", object.getBluetoothOnTime());
+        contentValues.put("LOCATION", object.getLocation());
         db.insertWithOnConflict(TABLE, null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     @Override
-    public List<DailyStat> getAll() {
-        List<DailyStat> dailyStats = new ArrayList<>();
+    public List<Contact> getAll() {
+        List<Contact> contacts = new ArrayList<>();
         SQLiteDatabase db = this.getWritableDatabase();
 
         Cursor cursor = db.rawQuery("select * from "+TABLE, null);
 
         while(cursor!=null && cursor.moveToNext()) {
-            dailyStats.add(new DailyStat(cursor.getInt(0), cursor.getInt(1), cursor.getFloat(2)));
+            contacts.add(new Contact(cursor.getString(0), cursor.getString(1), cursor.getInt(2),
+                    cursor.getString(3)));
         }
-        return dailyStats;
+        return contacts;
     }
 
     public int getCount() {
@@ -62,9 +66,9 @@ public class DailyStatDao extends SQLiteOpenHelper implements BaseDao<DailyStat>
         return 0;
     }
 
-    public void deleteFirstNRecords(int n) {
-
+    public void delete15DaysOldRecords(int day, int month, int year) {
+        // delete 15 days old data
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("delete from "+ TABLE +" where id in (select id from "+ TABLE +" order by id LIMIT "+n+");");
+        db.execSQL("delete from "+ TABLE +" where DAY="+day+" and MONTH="+month+" and YEAR="+year +";");
     }
 }

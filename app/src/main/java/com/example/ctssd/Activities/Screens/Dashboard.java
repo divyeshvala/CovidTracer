@@ -1,5 +1,5 @@
-
 package com.example.ctssd.Activities.Screens;
+
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,8 +21,12 @@ import androidx.fragment.app.Fragment;
 import com.example.ctssd.Activities.CoronaInfoActivity;
 import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
-import com.example.ctssd.Utils.DatabaseHelper;
-import com.example.ctssd.Utils.Utilities;
+import com.example.ctssd.dao.ContactDao;
+import com.example.ctssd.dao.DailyStatDao;
+import com.example.ctssd.helper.Helper;
+import com.example.ctssd.model.DailyStat;
+
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -34,14 +38,13 @@ public class Dashboard extends Fragment implements View.OnClickListener {
     private static final String TAG = "TAB2";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    private String mParam1;
-    private String mParam2;
     private OnFragmentInteractionListener mListener;
     private TextView todaysNum;
     private TextView riskIndexText, currentStatus, avgContacts, violationNumText,
             maxContactsText, maxRiskIndexText, avgRiskIndexText, BTOffTimeText,
             maxBTOffTimeText, avgBTOffTimeText;
-    private DatabaseHelper myDb;
+    private ContactDao contactDao;
+    private DailyStatDao dailyStatDao;
     private static String currentStatusVar = "null";
     private static int riskIndexVar = -1, past13DaysRiskSum = 0, maxRiskIndexVar = 0, maxContactsVar = 0;
     private static float BTOffTime = 0, maxBTOffTime = 0, past13DaysBTOffSum = 0;
@@ -80,38 +83,21 @@ public class Dashboard extends Fragment implements View.OnClickListener {
         violationInfo.setOnClickListener(this);
         bluetoothInfo.setOnClickListener(this);
 
-        myDb = new DatabaseHelper(getActivity());
+        contactDao = new ContactDao(getActivity());
+        dailyStatDao = new DailyStatDao(getActivity());
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         final SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
 
         // Every 24 hours work
-        final Utilities utilities = new Utilities();
+        final Helper utilities = new Helper();
         if (utilities.isTwentyFourHoursOver(getActivity())) {
             int preRiskIndex = settings.getInt("myRiskIndex", 0);
             utilities.TwentyFourHoursWork(getActivity(), preRiskIndex);
             SharedPreferences.Editor mapEditor = settings.edit();
             mapEditor.putInt("fromContactsRiskMax", 0);
             mapEditor.apply();
-
             riskIndexVar = 0;
-
-            // for starting this app automatically next day.
-            //Alarm alarm = new Alarm();
-            //alarm.setAlarm(getActivity());
-
-            Cursor cursor = myDb.getAllDataTable3();
-            if (cursor != null && cursor.getCount() > 0) {
-                if (utilities.isInternetAvailable(getActivity())) {
-                    Log.i(TAG, "Uploading data to cloud");
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            utilities.uploadDataToCloud(getActivity());
-                        }
-                    }).start();
-                }
-            }
         } else {
             riskIndexVar = settings.getInt("myRiskIndex", 0);
         }
@@ -135,16 +121,6 @@ public class Dashboard extends Fragment implements View.OnClickListener {
             }
         });
 
-        // start BackgroundService for discovering nearby devices
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                Intent intent = new Intent(getActivity(), BackgroundService.class);
-//                //Objects.requireNonNull(getContext()).startService(intent);
-//                ContextCompat.startForegroundService(Objects.requireNonNull(getActivity()), intent);
-//            }
-//        }).start();
-
         // get past 13 day sum of contacts.
         past13DaySum = findPast13DaySum();
         findAverageAndMaxRiskAndBTOffTime();
@@ -162,20 +138,14 @@ public class Dashboard extends Fragment implements View.OnClickListener {
             String action = intent.getAction();
             if(action!=null && action.equals("ACTION_UPDATE_CONTACTS"))
             {
-                Log.i(TAG, "receiver : updating contacts today");
-                Cursor cursor = myDb.getAllData();
-                if(cursor!=null)
-                {
-                    SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
-                    contactsTodayVar = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
-                    todaysNum.setText(String.valueOf(contactsTodayVar));
-                    avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
-                    avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
-                    if(contactsTodayVar>maxContactsVar) {
-                        maxContactsVar = contactsTodayVar;
-                        maxContactsText.setText(String.valueOf(maxContactsVar));
-                    }
-                    cursor.close();
+                SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
+                contactsTodayVar = contactDao.getCount() + settings.getInt("contactsTodayPenalty", 0);
+                todaysNum.setText(String.valueOf(contactsTodayVar));
+                avgNumVar = (double) (past13DaySum + contactsTodayVar) / totalDays;
+                avgContacts.setText(String.format(Locale.getDefault(),"%.2f", avgNumVar));
+                if(contactsTodayVar>maxContactsVar) {
+                    maxContactsVar = contactsTodayVar;
+                    maxContactsText.setText(String.valueOf(maxContactsVar));
                 }
             }
             else if(action!=null && action.equals("ACTION_UPDATE_RISK_HALF_HOUR"))
@@ -230,13 +200,9 @@ public class Dashboard extends Fragment implements View.OnClickListener {
     private void setStatsValues()
     {
         SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
-        Cursor cursor = myDb.getAllData();
-        if (cursor != null)
-        {
-            contactsTodayVar = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
-            todaysNum.setText(String.valueOf(contactsTodayVar));
-            cursor.close();
-        }
+        contactsTodayVar = contactDao.getCount() + settings.getInt("contactsTodayPenalty", 0);
+        todaysNum.setText(String.valueOf(contactsTodayVar));
+
         violationNumVar = settings.getInt("crowdNo", 0);
         BTOffTime = settings.getFloat("totalBTOffTime", 0);
 
@@ -266,13 +232,13 @@ public class Dashboard extends Fragment implements View.OnClickListener {
 
     private void findAverageAndMaxRiskAndBTOffTime()
     {
-        Cursor cursor1 = myDb.getAllDataTable2();
+        List<DailyStat> dailyStatList = dailyStatDao.getAll();
         int s=0, mx=0, temp;
         float BTs=0, BTtemp, BTmx=0;
-        while(cursor1!=null && cursor1.moveToNext())
+        for(DailyStat dailyStat : dailyStatList)
         {
-            temp = cursor1.getInt(2);
-            BTtemp = cursor1.getFloat(3);
+            temp = dailyStat.getContactsCount();
+            BTtemp = dailyStat.getBluetoothOnTime();
             BTs += BTtemp;
             s += temp;
             if(temp>mx)
@@ -301,17 +267,14 @@ public class Dashboard extends Fragment implements View.OnClickListener {
     private int findPast13DaySum() {
         int s = 0;
         maxContactsVar = 0;
-        Cursor cursor = myDb.getAllDataTable2();
-        if (cursor == null)
-            return 0;
+        List<DailyStat> dailyStatList = dailyStatDao.getAll();
         int  mx=0, temp;
-        while (cursor.moveToNext()) {
-            temp= cursor.getInt(1);
+        for(DailyStat dailyStat : dailyStatList) {
+            temp= dailyStat.getContactsCount();
             s += temp;
             if(temp>mx)
                 mx = temp;
         }
-        cursor.close();
         maxContactsVar = mx;
         return s;
     }
@@ -331,22 +294,13 @@ public class Dashboard extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.id_contactsTodayInfo:
-                Cursor cursor = myDb.getAllData();
-                String list ="DID      MR  Time\n";
-                if(cursor!=null)
-                {
-                    while (cursor.moveToNext())
-                    {
-                        list += cursor.getString(0)+"   "+cursor.getInt(2)+"   "+cursor.getString(1)+"\n";
-                    }
-                }
                 SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
                 int penalty = settings.getInt("contactsTodayPenalty", 0);
-                Utilities.showMessage(getActivity(), "Contacts", "Contacts Today shows number of people who were in your close proximity today.\n\n" +
-                        "Maximum Contacts shows maximum number of people you have contacted in last 14 days.\n\npenalty = "+penalty+"\n\n"+list);
+                Helper.showMessage(getActivity(), "Contacts", "Contacts Today shows number of people who were in your close proximity today.\n\n" +
+                        "Maximum Contacts shows maximum number of people you have contacted in last 14 days.\n\npenalty = "+penalty+"\n\n");
                 return;
             case R.id.id_violationInfo:
-                Utilities.showMessage(getActivity(), "Violation of social distancing", "Each time you are standing in the crowd with more than 7 people, you are violating the rules of social distancing.");
+                Helper.showMessage(getActivity(), "Violation of social distancing", "Each time you are standing in the crowd with more than 7 people, you are violating the rules of social distancing.");
                 return;
             case R.id.id_riskIndexInfo:
                 String message = "\n\nCalculation in this case- \n";
@@ -356,7 +310,7 @@ public class Dashboard extends Fragment implements View.OnClickListener {
                 message += "\nfromBluetoothOffTime : "+ settings1.getInt("fromBluetoothOffTime", 0);
                 message += "\nfromCrowdInstances : "+ settings1.getInt("fromCrowdInstances", 0);
 
-                Utilities.showMessage(getActivity(), "Risk Factor", "Risk factor shows your daily risk of getting infection.\n It is based on 4 factors:\n" +
+                Helper.showMessage(getActivity(), "Risk Factor", "Risk factor shows your daily risk of getting infection.\n It is based on 4 factors:\n" +
                         "1. Number of people contacted in a day\n" +
                         "2. Risk factor of your contacts\n" +
                         "3. For how much time your bluetooth was off.\n" +
@@ -366,13 +320,7 @@ public class Dashboard extends Fragment implements View.OnClickListener {
 
 
             case R.id.id_bluetoothInfo:
-//                Cursor cursor1 = myDb.getAllDataTable2();
-//                String msg="Risk    BTOff\n";
-//                while(cursor1!=null && cursor1.moveToNext())
-//                {
-//                    msg += cursor1.getInt(2)+"     "+cursor1.getFloat(3)+"\n";
-//                }
-                Utilities.showMessage(getActivity(), "Bluetooth On Time", "It shows for how many hours your bluetooth was on today. It will be updated every 30 minutes.");
+                Helper.showMessage(getActivity(), "Bluetooth On Time", "It shows for how many hours your bluetooth was on today. It will be updated every 30 minutes.");
         }
     }
 
@@ -388,10 +336,6 @@ public class Dashboard extends Fragment implements View.OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override

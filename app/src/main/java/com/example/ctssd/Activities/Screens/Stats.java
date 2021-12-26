@@ -21,7 +21,9 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import com.example.ctssd.R;
-import com.example.ctssd.Utils.DatabaseHelper;
+import com.example.ctssd.dao.ContactDao;
+import com.example.ctssd.dao.DailyStatDao;
+import com.example.ctssd.model.DailyStat;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
@@ -40,15 +42,13 @@ import java.util.Objects;
 import static android.content.Context.MODE_PRIVATE;
 
 public class Stats extends Fragment {
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
     private TextView yAxisTitle;
     private BarChart barChart;
     private RadioButton last7Days, sevenDaysAgo;
     private RadioGroup radioGroup ;
-    private DatabaseHelper myDb;
+    private DailyStatDao dailyStatDao;
+    private ContactDao contactDao;
     private List<BarEntry> barEntriesContactsLast7Days, barEntriesContacts7DaysAgo;
     private List<BarEntry> barEntriesRiskLast7Days, barEntriesRisk7DaysAgo;
     private String[] xAxisLabelsLast7Days, xAxisLabels7DaysAgo;
@@ -56,23 +56,17 @@ public class Stats extends Fragment {
     private String selectedBTN;
 
     private static int preTodayContacts=0;
-    private View rootVar;
-
-    private String mParam1;
-    private String mParam2;
+    //private View rootVar;
 
     private OnFragmentInteractionListener mListener;
 
     public Stats() {
-        // Required empty public constructor
     }
 
     public static Stats newInstance(String param1, String param2)
     {
         Stats fragment = new Stats();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -80,10 +74,6 @@ public class Stats extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -91,7 +81,6 @@ public class Stats extends Fragment {
                              Bundle savedInstanceState)
     {
         final View root =inflater.inflate(R.layout.fragment_tab3, container, false);
-        rootVar = root;
         barChart = root.findViewById(R.id.barChart);
         last7Days = root.findViewById(R.id.id_last7Days);
         sevenDaysAgo = root.findViewById(R.id.id_7DaysAgo);
@@ -103,7 +92,8 @@ public class Stats extends Fragment {
         contactsGraphBTN.setEnabled(false);
         selectedBTN = "contacts";
 
-        myDb = new DatabaseHelper(getActivity());
+        contactDao = new ContactDao(getActivity());
+        dailyStatDao = new DailyStatDao(getActivity());
         barEntriesContactsLast7Days = new ArrayList<>();
         barEntriesContacts7DaysAgo = new ArrayList<>();
         barEntriesRiskLast7Days = new ArrayList<>();
@@ -116,15 +106,8 @@ public class Stats extends Fragment {
 
         SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", getActivity().MODE_PRIVATE);
         barEntriesRiskLast7Days.add(new BarEntry(7, settings.getInt("myRiskIndex", 0)));
-        Cursor cursor = myDb.getAllData();
-        if(cursor!=null)
-        {
-            preTodayContacts = cursor.getCount();
-            barEntriesContactsLast7Days.add(new BarEntry(7, preTodayContacts));
-            cursor.close();
-        }
-        else
-            barEntriesContactsLast7Days.add(new BarEntry(7, 0));
+        preTodayContacts = contactDao.getCount();
+        barEntriesContactsLast7Days.add(new BarEntry(7, preTodayContacts));
 
         Calendar calendar = Calendar.getInstance();
         xAxisLabelsLast7Days[7] = calendar.get(Calendar.DAY_OF_MONTH)+"-"+(calendar.get((Calendar.MONTH))+1);
@@ -229,18 +212,18 @@ public class Stats extends Fragment {
 
     private void fillBarEntries()
     {
-        Cursor mCursor = myDb.getAllDataTable2();
-        if(mCursor==null)
+        List<DailyStat> dailyStatList = dailyStatDao.getAll();
+        if(dailyStatList.size()==0)
             return;
         int i=1, j=-13;
         barEntriesContacts7DaysAgo.add(new BarEntry(0, 0));
         barEntriesRisk7DaysAgo.add(new BarEntry(0, 0));
 
         xAxisLabels7DaysAgo[0] = "";
-        while( i<8 && mCursor.moveToNext())
+        while( i<8)
         {
-            barEntriesContacts7DaysAgo.add(new BarEntry(i, mCursor.getInt(1)));
-            barEntriesRisk7DaysAgo.add(new BarEntry(i, mCursor.getInt(2)));
+            barEntriesContacts7DaysAgo.add(new BarEntry(i, dailyStatList.get(i).getContactsCount()));
+            barEntriesRisk7DaysAgo.add(new BarEntry(i, dailyStatList.get(i).getRisk()));
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, j);
             Date dateBeforeNDays = cal.getTime();
@@ -255,10 +238,10 @@ public class Stats extends Fragment {
 
         xAxisLabelsLast7Days[0] = "";
         i=1;
-        while( mCursor.moveToNext() && i<7)
+        while(i<7)
         {
-            barEntriesContactsLast7Days.add(new BarEntry(i, mCursor.getInt(1)));
-            barEntriesRiskLast7Days.add(new BarEntry(i, mCursor.getInt(2)));
+            barEntriesContactsLast7Days.add(new BarEntry(i, dailyStatList.get(i).getContactsCount()));
+            barEntriesRiskLast7Days.add(new BarEntry(i, dailyStatList.get(i).getRisk()));
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, j);
             Date dateBeforeNDays = cal.getTime();
@@ -267,7 +250,6 @@ public class Stats extends Fragment {
             i++;
             j++;
         }
-        mCursor.close();
     }
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -277,12 +259,11 @@ public class Stats extends Fragment {
             String action = intent.getAction();
             if(action!=null && action.equals("ACTION_UPDATE_CONTACTS"))
             {
-                Cursor cursor = myDb.getAllData();
-                if(cursor!=null && preTodayContacts!=cursor.getCount())
+                int contactsCount = contactDao.getCount();
+                if(preTodayContacts!=contactsCount)
                 {
                     SharedPreferences settings = Objects.requireNonNull(getActivity()).getSharedPreferences("MySharedPref", MODE_PRIVATE);
-                    preTodayContacts = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
-                    cursor.close();
+                    preTodayContacts = contactsCount + settings.getInt("contactsTodayPenalty", 0);
                     barEntriesContactsLast7Days.remove(7);
                     barEntriesContactsLast7Days.add(7, new BarEntry(7, preTodayContacts));
                     if(selectedBTN.equals("contacts") && last7Days.isChecked())

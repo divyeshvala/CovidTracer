@@ -20,7 +20,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -40,16 +39,18 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.example.ctssd.Activities.MainActivity;
 import com.example.ctssd.R;
-import com.example.ctssd.Utils.DatabaseHelper;
 import com.example.ctssd.dao.ContactDao;
+import com.example.ctssd.dao.ContactHistoryDao;
+import com.example.ctssd.dao.DailyStatDao;
 import com.example.ctssd.model.Contact;
 import com.example.ctssd.model.UserQueue;
-import com.example.ctssd.Utils.Utilities;
+import com.example.ctssd.helper.Helper;
 
 import java.util.Calendar;
 import java.util.Formatter;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -70,14 +71,13 @@ public class BackgroundService extends Service {
     private static long preCrowdInstanceTime = -1;
     private static int i = 1, maxRiskFromContacts = 0;
     private double latitude = -1, longitude = -1;
-    private DatabaseHelper myDb;
+    private ContactDao contactDao;
     private BluetoothAdapter bluetoothAdapter;
     private Queue<UserQueue> contacts;
     private Set<String> contactsSet;
     private static boolean isUserMoving = false;
     private static String deviceId;
     private static int contactsTodayGlobal = 0, riskIndexGlobal = 0;
-    private String temp="";
     private Alarm alarm = new Alarm();
 
     private class MyLocationListener implements LocationListener {
@@ -85,8 +85,6 @@ public class BackgroundService extends Service {
         @Override
         public void onLocationChanged(Location location)
         {
-            Log.i("LocationBackgr", "onLocationChanged");
-
             double preLatitude = latitude;
             double preLongitude = longitude;
 
@@ -96,23 +94,16 @@ public class BackgroundService extends Service {
         }
 
         @Override
-        public void onProviderDisabled(String provider) {
-            Log.i("LocationTab2", "Provider disabled");
-        }
-
+        public void onProviderDisabled(String provider) { }
         @Override
-        public void onProviderEnabled(String provider) {
-            Log.i("LocationTab2", "Provider disabled");
-        }
-
+        public void onProviderEnabled(String provider) { }
         @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
+        public void onStatusChanged(String provider, int status, Bundle extras) { }
     }
 
     private void onNewLocation(double preLatitude, double preLongitude)
     {
-        double dist=0, dist2=0;
+        double distance = 0;
         if(preLatitude!=-1 && preLongitude!=-1 && longitude!=-1 && latitude!=-1)
         {
             Location start = new Location("");
@@ -121,37 +112,22 @@ public class BackgroundService extends Service {
             Location dest = new Location("");
             dest.setLatitude(latitude);
             dest.setLongitude(longitude);
-
-            dist = start.distanceTo(dest);
-
-            //dist2 = distance(preLatitude, preLongitude, latitude, longitude)*(1000/0.62137);
+            distance = start.distanceTo(dest);
         }
-        Log.i("COORDINATES", "Distance :"+dist);
-
-        if(dist>=20)
+        if(distance >= 20)
         {
             isUserMoving = true;
         }
-
-        //Utilities utilities = new Utilities();
-        //utilities.sendNotification(getApplicationContext(), "Location", "You have travelled "+dist+"meters distance in past 30seconds.\n"+"Your coordinates : "+latitude+"\n"+longitude,
-               // 311, "locationTemp1");
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        Log.i(TAG, "Inside onCreate...");
-        //Toast.makeText(this, "inside onCreate", Toast.LENGTH_SHORT).show();
-
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate
                 (new Runnable() {
                     public void run() {
-                        //temp += Calendar.getInstance().get(Calendar.MINUTE)+":"+Calendar.getInstance().get(Calendar.SECOND)+"=";
-                        Log.i(TAG, "Sheduler has been called "+temp);
-
                         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
                         SharedPreferences.Editor edit = settings.edit();
                         if(bluetoothAdapter.getState()!=BluetoothAdapter.STATE_ON && Calendar.getInstance().get(Calendar.HOUR_OF_DAY)>=7 && Calendar.getInstance().get(Calendar.HOUR_OF_DAY)<=22)
@@ -183,17 +159,15 @@ public class BackgroundService extends Service {
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
-        myDb = new DatabaseHelper(getApplicationContext());
+        contactDao = new ContactDao(getApplicationContext());
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
         deviceId = settings.getString("myDeviceId", "NA");
         riskIndexGlobal = settings.getInt("myRiskIndex", 0);
-        Cursor cursor = myDb.getAllData();
-        if (cursor != null) {
-            contactsTodayGlobal = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
-            cursor.close();
-        }
+
+        int contactsCount = contactDao.getCount();
+        contactsTodayGlobal = contactsCount + settings.getInt("contactsTodayPenalty", 0);
 
         contacts = new LinkedList<>();
         contactsSet = new HashSet<>();
@@ -231,7 +205,7 @@ public class BackgroundService extends Service {
                 @Override
                 public void run()
                 {
-                    Utilities utilities = new Utilities();
+                    Helper utilities = new Helper();
                     utilities.sendNotifToTurnOnBT(getApplication());
                 }
             }, 5000);
@@ -252,10 +226,6 @@ public class BackgroundService extends Service {
         IntentFilter intentFilter3 = new IntentFilter("COORDINATES_FOUND");
         registerReceiver(locationReceiver, intentFilter3);
 
-        //IntentFilter intentFilter5 = new IntentFilter("ACTION_STOP_SERVICE");
-        //registerReceiver(stopServiceReceiver, intentFilter5);
-
-        //return START_REDELIVER_INTENT;  //TODO: START_STICKY
         return START_STICKY;
     }
 
@@ -263,19 +233,15 @@ public class BackgroundService extends Service {
     {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new MyLocationListener();
-
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            Log.i("LocationTab2", "requestLocUpdates1.1");
             if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                Log.i("LocationTab2", "requestLocUpdates1.2");
                 locationManager.requestLocationUpdates(
                         LocationManager.GPS_PROVIDER, 120000, 20, locationListener);
-            } // todo:
+            }
         }
         else
         {
-            Log.i("LocationTab2", "requestLocUpdates2");
             locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER, 120000, 20, locationListener);
         }
@@ -292,17 +258,11 @@ public class BackgroundService extends Service {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            Log.i(TAG, "turnOnBluetooth receiver is called");
-            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
-            {
-                Log.i(TAG, "Inside on activity result : BT is off");
-                Utilities utilities = new Utilities();
+            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON) {
+                Helper utilities = new Helper();
                 utilities.sendNotifToTurnOnBT(getApplication());
             }
-            else
-            {
-                Log.i(TAG, "Inside on activity result : BT is on now");
-                // dismiss notification
+            else {
                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                 notificationManager.cancel(1245);
             }
@@ -313,35 +273,13 @@ public class BackgroundService extends Service {
         public void onReceive(Context context, Intent intent)
         {
             String action = intent.getAction();
-            Log.i(TAG, "inside COORDINATES_FOUND :" + action);
             if (action!=null)
             {
-                double preLatitude=latitude, preLongitude=longitude;
                 latitude = intent.getDoubleExtra("latitude", -1);
                 longitude = intent.getDoubleExtra("longitude",-1);
-                Log.i("COORDINATES", "from broadcast");
             }
         }
     };
-
-//    private final BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
-//        public void onReceive(Context context, Intent intent)
-//        {
-//            String action = intent.getAction();
-//            Log.i(TAG, "inside stopServiceReceiver :" + action);
-//
-//            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-//            notificationManager.cancel(112);
-//
-//            if(BluetoothAdapter.getDefaultAdapter().getState()!=BluetoothAdapter.STATE_ON)
-//            {
-//                notificationManager.cancel(1245);
-//            }
-//
-//            stopForeground(true);
-//            stopSelf();
-//        }
-//    };
 
     // Create a BroadcastReceiver for ACTION_FOUND.
     private final BroadcastReceiver receiver = new BroadcastReceiver()
@@ -364,14 +302,17 @@ public class BackgroundService extends Service {
                 if(deviceName.equals("NA"))
                     return;
 
-                String time = calendar.get(Calendar.HOUR_OF_DAY)+":"+calendar.get(Calendar.MINUTE);
+                String time = calendar.get(Calendar.DAY_OF_MONTH)+":"+
+                        calendar.get(Calendar.MONTH)+":"+
+                        calendar.get(Calendar.YEAR)+":"+
+                        calendar.get(Calendar.HOUR_OF_DAY)+":"+
+                        calendar.get(Calendar.MINUTE);
+
                 short rssi = Objects.requireNonNull(intent.getExtras()).getShort(BluetoothDevice.EXTRA_RSSI);
                 int iRssi = abs(rssi);
                 double power = (iRssi - 59) / 25.0;
                 String mm = new Formatter().format("%.2f", pow(10, power)).toString();
                 int distance = convertToInt(mm);
-
-                Log.i(TAG, "device found :" +deviceName+" "+time);
 
                 if(isNameValid(deviceName) && distance<=2)
                 {
@@ -388,44 +329,31 @@ public class BackgroundService extends Service {
                     int riskIndex = convertToInt(deviceName.substring(i+1));
 
                     SharedPreferences settings = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-                    Cursor cursor2 = myDb.getAllData();
+                    List<Contact> contacts = contactDao.getAll();
 
-                    if( checkTimeDiffAndRisk(cursor2, phone, riskIndex) )
+                    if(checkTimeDiffAndRisk(contacts, phone, riskIndex))
                     {
-                        Log.i(TAG, "preRisk of device not equal and half hour is up.");
                         SharedPreferences.Editor edit = settings.edit();
                         edit.putInt("contactsTodayPenalty", (settings.getInt("contactsTodayPenalty", 0)+1));
                         edit.apply();
                     }
-
-                    // todo : replace with pre code if doesn't work
-                    //myDb.insertData(phone, time, riskIndex, latitude+"_"+longitude);
                     ContactDao contactDao = new ContactDao(getApplicationContext());
                     contactDao.save(new Contact(phone, time, riskIndex, latitude+"_"+longitude));
-
-                    Log.i(TAG, "device added :" +phone+"  "+time+"  "+riskIndex);
 
                     if(riskIndex > maxRiskFromContacts)
                     {
                         maxRiskFromContacts = riskIndex;
                     }
-
                     checkIfUserInTheCrowd(phone);
-                    Log.i(TAG, "Distance less than four");
+                    int tempContactsToday = contactDao.getCount() + settings.getInt("contactsTodayPenalty", 0);
 
-                    int tempContactsToday = 0;
-                    Cursor cursor = myDb.getAllData();
-                    if(cursor!=null) {
-                        tempContactsToday = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
-                        cursor.close();
-                        if (tempContactsToday != contactsTodayGlobal) {
-                            contactsTodayGlobal = tempContactsToday;
-                            Intent intent2 = new Intent("ACTION_UPDATE_CONTACTS");
-                            getApplication().sendBroadcast(intent2);
-
-                            updateNotification();
-                        }
+                    // for updating contacts in Dashboard and notification.
+                    if (tempContactsToday != contactsTodayGlobal) {
+                        contactsTodayGlobal = tempContactsToday;
+                        getApplication().sendBroadcast( new Intent("ACTION_UPDATE_CONTACTS"));
+                        updateNotification();
                     }
+
                     // for updating contacts list in Tab1
                     Intent intent1 = new Intent("ACTION_update_list");
                     intent1.putExtra("distance", mm);
@@ -437,7 +365,6 @@ public class BackgroundService extends Service {
             }
             else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action))
             {
-                Log.i(TAG, "ACTION_DISCOVERY_FINISHED");
                 bluetoothAdapter.startDiscovery();
             }
         }
@@ -445,7 +372,7 @@ public class BackgroundService extends Service {
 
     private void updateNotification()
     {
-        Utilities utilities = new Utilities();
+        Helper utilities = new Helper();
         utilities.sendStatsUpdateNotification(getApplication(), riskIndexGlobal, contactsTodayGlobal);
     }
 
@@ -459,7 +386,6 @@ public class BackgroundService extends Service {
             return;
         }
 
-        Log.i(TAG, "CheckIfInTheCrowd : now"+now.getTime());
         if(!contactsSet.contains(phone))
         {
             contactsSet.add(phone);
@@ -467,14 +393,12 @@ public class BackgroundService extends Service {
             UserQueue head = contacts.peek();
             if(head!=null)
             {
-                Log.i(TAG, "CheckIfInTheCrowd : head time ="+ head.getCalendar().getTime());
                 if(now.getTime().getTime()-head.getCalendar().getTime().getTime() <= CROWD_TIME_LIMIT )
                 {
                     if(contacts.size()>=CROWD_LIMIT)
                     {
                         contacts.clear();
                         contactsSet.clear();
-                        Log.i(TAG, "Crowd limit reached");
                         int crowdInstances = settings.getInt("crowdInstances", 0);
                         crowdInstances++;
 
@@ -508,7 +432,6 @@ public class BackgroundService extends Service {
                 }
             }
         }
-        Log.i(TAG, "CheckIfInTheCrowd : size of contacts = "+contacts.size());
     }
 
     public void findRiskIndex()
@@ -530,13 +453,9 @@ public class BackgroundService extends Service {
         }
         mapEditor.putInt("fromContactsRiskMax", fromContactsRiskMax);
 
-        //2. contacts today (But really yesterday)
-        int fromContactsToday=0;
-        Cursor cursor = myDb.getAllData();
-        if(cursor!=null)
-        {
-            fromContactsToday = cursor.getCount() + settings.getInt("contactsTodayPenalty", 0);
-        }
+        // 2. contacts today (But really yesterday)
+        int fromContactsToday = contactDao.getCount() + settings.getInt("contactsTodayPenalty", 0);
+
         if(fromContactsToday>10)
         {
             if((fromContactsToday-10) <= 30)
@@ -557,7 +476,7 @@ public class BackgroundService extends Service {
 
         mapEditor.putInt("fromBluetoothOffTime", fromBluetoothOffTime);
 
-        //4. Number of times user was standing in crowd.
+        // 4. Number of times user was standing in crowd.
         int CrowdNo = settings.getInt("crowdNo", 0);
         int fromCrowdInstances=0;
         if(CrowdNo>2)
@@ -567,9 +486,11 @@ public class BackgroundService extends Service {
         mapEditor.putInt("fromCrowdInstances", fromCrowdInstances);
         mapEditor.apply();
 
-        // 5. from Self assessment report.
-//        int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
-//        messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
+        /*
+        5. from Self assessment report.
+        int fromSelfAssessReport = settings.getInt("riskFromReport", 0);
+        messageForRiskIndex.put("fromSelfAssessReport", fromSelfAssessReport);
+         */
 
         int riskIndex = fromContactsRiskMax+fromBluetoothOffTime+fromContactsToday+fromCrowdInstances;
         if(riskIndex>100)
@@ -598,9 +519,6 @@ public class BackgroundService extends Service {
         Intent intent = new Intent("ACTION_UPDATE_RISK_HALF_HOUR");
         intent.putExtra("riskIndex", riskIndex);
         sendBroadcast(intent);
-
-        Log.i("Notification", "sending you risk notif");
-        //Toast.makeText(this, "Sending you risk notification", Toast.LENGTH_SHORT).show();
 
         if(riskIndex!=riskIndexGlobal)
         {
@@ -632,11 +550,10 @@ public class BackgroundService extends Service {
         super.onDestroy();
 
         try {
-            // don't forget to unregister receiver
+            // unregister all the receivers
             unregisterReceiver(turnOnBluetooth);
             unregisterReceiver(locationReceiver);
             unregisterReceiver(receiver);
-            //unregisterReceiver(stopServiceReceiver);
         }
         catch (Exception e)
         {
@@ -645,41 +562,28 @@ public class BackgroundService extends Service {
 
     }
 
-    private boolean checkTimeDiffAndRisk(Cursor cursor, String DId, int risk)
+    private boolean checkTimeDiffAndRisk(List<Contact> contacts, String DId, int risk)
     {
-        while(cursor!=null && cursor.moveToNext())
+        for(Contact contact : contacts)
         {
-            if(cursor.getString(0).equals(DId))
+            if(contact.getPhone().equals(DId))
             {
-                String time = cursor.getString(1);
-                if(getTimeDiff(time))
+                if(getTimeDiff(contact.getTime()))
                 {
-                    if(cursor.getInt(2)<risk) {
-                        cursor.close();
-                        return true;
-                    }
-                    cursor.close();
-                    return false;
+                    return contact.getRisk() < risk;
                 }
-                else {
-                    cursor.close();
-                    return false;
-                }
+                return false;
             }
         }
-        Objects.requireNonNull(cursor).close();
         return false;
     }
 
     private boolean getTimeDiff(String time)
     {
         int i;
-        for(i=0; i<time.length(); i++)
-            if(time.charAt(i)==':')
-                break;
-        int hour = convertToInt(time.substring(0, i));
-        int minute = convertToInt(time.substring(i+1));
-        Log.i("TimeDiff", "Pre time :"+ hour+":"+minute);
+        String[] times = time.split(":");
+        int hour = Integer.parseInt(times[3]);
+        int minute = Integer.parseInt(times[4]);
         if(hour==Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
         {
             return Calendar.getInstance().get(Calendar.MINUTE) - minute >= 30;
